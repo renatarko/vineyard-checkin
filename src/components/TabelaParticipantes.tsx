@@ -131,10 +131,22 @@ export function TabelaParticipantes({
                     </p>
                   ) : null}
 
-                  {/* Em telas estreitas o lote perde a coluna, mas não some. */}
-                  {p.lote && (
-                    <p className="mt-0.5 text-xs text-muted-foreground sm:hidden">{p.lote}</p>
-                  )}
+                  {/* Em telas estreitas lote e fatura perdem a coluna, mas não
+                      somem: a fatura vai na ponta direita porque é ela que diz
+                      se a inscrição coletiva veio toda da mesma compra. */}
+                  {p.lote || p.fatura ? (
+                    <p
+                      className={cn(
+                        "mt-0.5 flex justify-between gap-2 text-xs text-muted-foreground md:hidden",
+                        // Sem fatura não sobra nada para mostrar depois do sm,
+                        // onde o lote já tem coluna própria.
+                        !p.fatura && "sm:hidden",
+                      )}
+                    >
+                      {p.lote && <span className="truncate sm:hidden">{p.lote}</span>}
+                      {p.fatura && <span className="ml-auto truncate">{p.fatura}</span>}
+                    </p>
+                  ) : null}
                 </TableCell>
 
                 <TableCell className="hidden text-muted-foreground md:table-cell">
