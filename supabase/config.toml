@@ -399,6 +399,12 @@ enabled = true
 verify_jwt = false
 
 # Revogar exige sessão de admin: a função confere o papel antes de agir.
+# Chamada antes de existir sessão — quem faz a triagem é a própria função,
+# que só envia código para admin ativo.
+[functions.enviar-codigo]
+enabled = true
+verify_jwt = false
+
 [functions.revogar-acesso]
 enabled = true
 verify_jwt = true
