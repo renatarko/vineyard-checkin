@@ -7,6 +7,16 @@ import { AbasSituacao, ChipsLote } from "@/components/FiltrosLista";
 import { SheetParticipante } from "@/components/SheetParticipante";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBuscaPorDocumento, useParticipantes } from "@/hooks/useParticipantes";
 import { useCredenciamento } from "@/hooks/useCredenciamento";
@@ -32,6 +42,7 @@ export default function Credenciamento() {
   const [situacao, setSituacao] = useState<Situacao>("todos");
   const [visiveis, setVisiveis] = useState(PAGINA);
   const [selecionado, setSelecionado] = useState<Participante | null>(null);
+  const [paraDesfazer, setParaDesfazer] = useState<Participante | null>(null);
 
   const idsPorDocumento = useBuscaPorDocumento(termo);
   const lotes = useMemo(() => lotesDisponiveis(lista), [lista]);
@@ -64,7 +75,10 @@ export default function Credenciamento() {
    */
   const alternar = (p: Participante) => {
     if (p.checkin_em !== null) {
-      desfazer.mutate(p.id);
+      // Desfazer pede confirmação: o alvo é pequeno, fica ao lado de dezenas
+      // de linhas iguais, e um toque errado apaga a entrada de quem já passou
+      // pela portaria.
+      setParaDesfazer(p);
       return;
     }
     if (p.precisa_identificacao && p.nome_real === null) {
@@ -163,6 +177,32 @@ export default function Credenciamento() {
         aberto={selecionado !== null}
         onFechar={() => setSelecionado(null)}
       />
+
+      <AlertDialog
+        open={paraDesfazer !== null}
+        onOpenChange={(aberto) => !aberto && setParaDesfazer(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desfazer o check-in?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {paraDesfazer?.nome_exibicao} volta para a lista de quem ainda não entrou. O
+              nome informado na portaria é mantido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (paraDesfazer !== null) desfazer.mutate(paraDesfazer.id);
+                setParaDesfazer(null);
+              }}
+            >
+              Desfazer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
