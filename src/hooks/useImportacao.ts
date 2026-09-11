@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { MODO_MOCK } from "@/lib/mock-flag";
+import { mock } from "@/lib/mock";
 import { CHAVE_PARTICIPANTES } from "@/hooks/useParticipantes";
 import { ErroCsv, decodificar, paraPayload, parseCsv, type ResultadoParse } from "@/lib/csv";
 import type { ResumoImportacao } from "@/lib/types";
@@ -41,6 +43,8 @@ export function useImportacao() {
    */
   const simular = useMutation({
     mutationFn: async (lido: ArquivoLido): Promise<ResumoImportacao> => {
+      if (MODO_MOCK) return mock.importar(lido.linhas, false);
+
       const { data, error } = await supabase.rpc("importar_participantes", {
         p_linhas: paraPayload(lido.linhas),
         p_arquivo: lido.nome,
@@ -56,6 +60,8 @@ export function useImportacao() {
   const confirmar = useMutation({
     mutationFn: async (): Promise<ResumoImportacao> => {
       if (arquivo === null) throw new Error("SEM_ARQUIVO");
+      if (MODO_MOCK) return mock.importar(arquivo.linhas, true);
+
       const { data, error } = await supabase.rpc("importar_participantes", {
         p_linhas: paraPayload(arquivo.linhas),
         p_arquivo: arquivo.nome,

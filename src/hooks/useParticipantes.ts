@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { MODO_MOCK } from "@/lib/mock-flag";
+import { mock } from "@/lib/mock";
 import { contar, indexar, type ParticipanteBuscavel } from "@/lib/busca";
 import { pareceDocumentoCompleto } from "@/lib/documento";
 import type { Participante } from "@/lib/types";
@@ -30,6 +32,8 @@ export function useParticipantes() {
     // websocket cai sem avisar.
     refetchInterval: 120_000,
     queryFn: async (): Promise<Participante[]> => {
+      if (MODO_MOCK) return mock.listarParticipantes();
+
       const { data, error } = await supabase
         .from("participantes")
         .select(COLUNAS)
@@ -40,6 +44,8 @@ export function useParticipantes() {
   });
 
   useEffect(() => {
+    if (MODO_MOCK) return;
+
     const canal = supabase
       .channel("participantes-ao-vivo")
       .on(
@@ -83,6 +89,16 @@ export function useBuscaPorDocumento(termo: string) {
     }
 
     let cancelado = false;
+
+    if (MODO_MOCK) {
+      mock.buscarPorDocumento(termo).then((encontrados) => {
+        if (!cancelado) setIds(new Set(encontrados));
+      });
+      return () => {
+        cancelado = true;
+      };
+    }
+
     supabase
       .rpc("buscar_por_documento", { p_texto: termo })
       .then(({ data, error }) => {

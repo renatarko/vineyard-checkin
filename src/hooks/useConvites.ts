@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { MODO_MOCK } from "@/lib/mock-flag";
+import { mock } from "@/lib/mock";
 import { gerarToken, hashToken, linkDeConvite } from "@/lib/convites";
 import type { Convite, Papel } from "@/lib/types";
 
@@ -12,6 +14,8 @@ export function useConvites() {
   const lista = useQuery({
     queryKey: CHAVE,
     queryFn: async (): Promise<Convite[]> => {
+      if (MODO_MOCK) return mock.listarConvites();
+
       const { data, error } = await supabase
         .from("convites")
         .select(
@@ -41,6 +45,11 @@ export function useConvites() {
       papel: Papel;
       horasValidade: number;
     }) => {
+      if (MODO_MOCK) {
+        const { id, token } = await mock.criarConvite(rotulo, papel, horasValidade);
+        return { id, link: linkDeConvite(token) };
+      }
+
       const token = gerarToken();
       const token_hash = await hashToken(token);
       const expira_em = new Date(Date.now() + horasValidade * 3600_000).toISOString();
@@ -66,6 +75,8 @@ export function useConvites() {
    */
   const revogar = useMutation({
     mutationFn: async (conviteId: string) => {
+      if (MODO_MOCK) return mock.revogarConvite(conviteId);
+
       const { error } = await supabase.functions.invoke("revogar-acesso", {
         body: { convite_id: conviteId },
       });

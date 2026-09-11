@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FaixaMock } from "@/components/FaixaMock";
 
 const ABAS = [
   { para: "/", rotulo: "Credenciar", Icone: ScanLine, soAdmin: false },
@@ -20,8 +21,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
+        <FaixaMock />
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-2 px-4">
-          <span className="truncate text-sm font-semibold">Credenciamento Vineyard</span>
+          <span className="truncate text-sm font-semibold">Vineyard Check-in</span>
           <div className="flex items-center gap-2">
             <span className="hidden truncate text-sm text-muted-foreground sm:inline">
               {perfil?.nome}

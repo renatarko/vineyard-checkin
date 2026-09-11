@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { MODO_MOCK } from "@/lib/mock-flag";
+import { mock } from "@/lib/mock";
 import type { Perfil } from "@/lib/types";
 
 interface Auth {
@@ -22,6 +24,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (MODO_MOCK) {
+      setSessaoCarregada(true);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       setSessao(data.session);
       setSessaoCarregada(true);
@@ -38,11 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { data: perfil, isLoading: carregandoPerfil } = useQuery({
     queryKey: ["perfil", sessao?.user.id],
-    enabled: sessao !== null,
+    enabled: MODO_MOCK || sessao !== null,
     // O perfil é o que a RLS consulta. Revogar acesso apaga `ativo`, e uma
     // aba aberta precisa perceber isso sem depender de recarregar a página.
     refetchInterval: 60_000,
     queryFn: async (): Promise<Perfil | null> => {
+      if (MODO_MOCK) return mock.perfil;
+
       const { data, error } = await supabase
         .from("perfis")
         .select("user_id, nome, papel, ativo")
@@ -54,6 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const sair = async () => {
+    if (MODO_MOCK) {
+      mock.reiniciar();
+      queryClient.invalidateQueries();
+      return;
+    }
     await supabase.auth.signOut();
     queryClient.clear();
   };
@@ -65,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         sessao,
         perfil: perfil ?? null,
-        carregando: !sessaoCarregada || (sessao !== null && carregandoPerfil),
+        carregando: !sessaoCarregada || ((MODO_MOCK || sessao !== null) && carregandoPerfil),
         ehAdmin: ativo && perfil?.papel === "admin",
         ehEquipe: ativo,
         sair,

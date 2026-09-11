@@ -9,3 +9,5 @@ dist-ssr
 *.log
 supabase/.branches
 supabase/.temp
+tsconfig.app.tsbuildinfo
+*.tsbuildinfo

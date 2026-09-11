@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { MODO_MOCK } from "@/lib/mock-flag";
+import { mock } from "@/lib/mock";
 import { CHAVE_PARTICIPANTES } from "@/hooks/useParticipantes";
 import type { Participante } from "@/lib/types";
 
@@ -23,6 +25,8 @@ export function useCredenciamento() {
 
   const credenciar = useMutation({
     mutationFn: async ({ id, nomeReal }: { id: string; nomeReal?: string | null }) => {
+      if (MODO_MOCK) return mock.credenciar(id, nomeReal);
+
       const { data, error } = await supabase
         .rpc("credenciar", { p_id: id, p_nome_real: nomeReal ?? null })
         .maybeSingle();
@@ -41,6 +45,8 @@ export function useCredenciamento() {
 
   const desfazer = useMutation({
     mutationFn: async (id: string) => {
+      if (MODO_MOCK) return mock.desfazer(id);
+
       const { data, error } = await supabase
         .rpc("desfazer_credenciamento", { p_id: id })
         .maybeSingle();
@@ -56,6 +62,8 @@ export function useCredenciamento() {
 
   const identificar = useMutation({
     mutationFn: async ({ id, nomeReal }: { id: string; nomeReal: string | null }) => {
+      if (MODO_MOCK) return mock.identificar(id, nomeReal);
+
       const { data, error } = await supabase
         .rpc("atualizar_nome_real", { p_id: id, p_nome_real: nomeReal })
         .maybeSingle();

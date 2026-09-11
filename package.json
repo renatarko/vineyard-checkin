@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "types": "supabase gen types typescript --local > src/integrations/supabase/types.ts"
+    "types": "supabase gen types typescript --local > src/integrations/supabase/types.ts",
+    "dev:mock": "VITE_MOCK=true vite"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
