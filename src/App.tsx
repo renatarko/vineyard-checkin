@@ -36,25 +36,19 @@ function Carregando() {
  * São só navegação — quem barra de verdade é a RLS, que consulta `perfis` a
  * cada query. Uma pessoa revogada que forçar a URL vê a tela, mas a tela vem
  * vazia.
- *
- * TODO(antes de publicar): os redirecionamentos abaixo estão comentados para
- * dar para abrir as telas sem banco enquanto o layout é ajustado. Descomentar
- * antes de qualquer deploy — sem eles, qualquer pessoa que abra a URL navega
- * por /importar e /equipe. A RLS ainda impede ler e escrever dados, mas a
- * estrutura do sistema fica exposta a quem não foi convidado.
  */
 function RotaDaEquipe({ children }: { children: ReactNode }) {
   const { sessao, ehEquipe, carregando } = useAuth();
   if (carregando) return <Carregando />;
-  // if (sessao === null) return <Navigate to="/sem-acesso" replace />;
-  // if (!ehEquipe) return <Navigate to="/sem-acesso" replace />;
+  if (sessao === null) return <Navigate to="/sem-acesso" replace />;
+  if (!ehEquipe) return <Navigate to="/sem-acesso" replace />;
   return <>{children}</>;
 }
 
 function RotaDeAdmin({ children }: { children: ReactNode }) {
   const { ehAdmin, carregando } = useAuth();
   if (carregando) return <Carregando />;
-  // if (!ehAdmin) return <Navigate to="/" replace />;
+  if (!ehAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
