@@ -19,7 +19,7 @@ export function useConvites() {
       const { data, error } = await supabase
         .from("convites")
         .select(
-          "id, rotulo, papel, expira_em, revogado_em, max_usos, usos, " +
+          "id, rotulo, papel, email, expira_em, revogado_em, max_usos, usos, " +
             "auth_user_id, resgatado_em, primeiro_user_agent, criado_em",
         )
         .order("criado_em", { ascending: false });
@@ -39,14 +39,16 @@ export function useConvites() {
     mutationFn: async ({
       rotulo,
       papel,
+      email,
       horasValidade,
     }: {
       rotulo: string;
       papel: Papel;
+      email?: string | null;
       horasValidade: number;
     }) => {
       if (MODO_MOCK) {
-        const { id, token } = await mock.criarConvite(rotulo, papel, horasValidade);
+        const { id, token } = await mock.criarConvite(rotulo, papel, horasValidade, email);
         return { id, link: linkDeConvite(token) };
       }
 
@@ -56,7 +58,7 @@ export function useConvites() {
 
       const { data, error } = await supabase
         .from("convites")
-        .insert({ token_hash, rotulo, papel, expira_em, max_usos: 1 })
+        .insert({ token_hash, rotulo, papel, email: email || null, expira_em, max_usos: 1 })
         .select("id")
         .single();
       if (error) throw error;

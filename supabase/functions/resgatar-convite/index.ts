@@ -4,11 +4,11 @@
 // função é o único lugar onde isso vira uma sessão de verdade, e por isso ela
 // roda com service role e é a única chamada que dispensa JWT.
 //
-// O usuário criado tem e-mail sintético num domínio que não recebe nada. Ele
-// existe só porque o Supabase Auth exige um e-mail por usuário; nenhuma
-// mensagem é enviada em momento algum (generateLink GERA o token, não envia).
+// O usuário do Auth usa o e-mail informado no convite, quando há um, e cai
+// num endereço sintético quando não há. Em nenhum dos casos sai mensagem:
+// generateLink GERA o token, não envia.
 //
-// NUNCA logar token, e-mail sintético ou qualquer dado de participante aqui.
+// NUNCA logar token, e-mail ou qualquer dado de participante aqui.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.1";
 import { cors, erro, json } from "../_shared/cors.ts";
@@ -59,18 +59,22 @@ Deno.serve(async (req) => {
   // Inexistente, expirado, revogado e esgotado saem todos iguais, de propósito.
   if (!consumido) return erro("CONVITE_INVALIDO", 404);
 
-  const { convite_id, papel, rotulo, auth_user_id } = consumido as {
+  const { convite_id, papel, rotulo, auth_user_id, email: emailConvite } = consumido as {
     convite_id: string;
     papel: string;
     rotulo: string;
     auth_user_id: string | null;
+    email: string | null;
   };
 
   try {
     let userId = auth_user_id;
-    // O e-mail é derivado do id do convite: reabrir o mesmo convite (quando
-    // max_usos > 1) reencontra a mesma pessoa em vez de criar outra.
-    const email = `c-${convite_id}@${DOMINIO}`;
+
+    // Com e-mail informado no convite, o usuário do Auth fica identificável no
+    // painel. Sem ele, cai num endereço derivado do id do convite — que também
+    // faz reabrir o mesmo convite reencontrar a mesma pessoa, em vez de criar
+    // outra. Nenhum dos dois recebe mensagem: nada é enviado aqui.
+    const email = emailConvite ?? `c-${convite_id}@${DOMINIO}`;
 
     if (!userId) {
       const { data: criado, error: erroCriar } = await admin.auth.admin.createUser({
@@ -80,11 +84,25 @@ Deno.serve(async (req) => {
         email_confirm: true,
         user_metadata: { rotulo, papel },
       });
-      if (erroCriar || !criado?.user) {
-        console.error("falha ao criar usuário:", erroCriar?.message);
+
+      if (erroCriar) {
+        // E-mail real pode já existir no Auth: convite reemitido para a mesma
+        // pessoa, ou usuário criado à mão no painel. Reaproveitar é o certo —
+        // criar outro deixaria duas contas para o mesmo endereço.
+        const { data: lista } = await admin.auth.admin.listUsers();
+        const existente = lista?.users?.find(
+          (u) => u.email?.toLowerCase() === email.toLowerCase(),
+        );
+        if (!existente) {
+          console.error("falha ao criar usuário:", erroCriar.message);
+          return erro("FALHA_INTERNA", 500);
+        }
+        userId = existente.id;
+      } else if (criado?.user) {
+        userId = criado.user.id;
+      } else {
         return erro("FALHA_INTERNA", 500);
       }
-      userId = criado.user.id;
     }
 
     // Amarra o usuário ao convite e cria/reativa o perfil, que é o que a RLS

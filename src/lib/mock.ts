@@ -165,6 +165,7 @@ function convitesAgora(): Convite[] {
   {
     id: "conv-1",
     rotulo: "Renata (admin)",
+    email: "renata@exemplo.com",
     papel: "admin",
     expira_em: new Date(Date.now() + 40 * 3600_000).toISOString(),
     revogado_em: null,
@@ -178,6 +179,7 @@ function convitesAgora(): Convite[] {
   {
     id: "conv-2",
     rotulo: "Bia — portaria",
+    email: null,
     papel: "operador",
     expira_em: new Date(Date.now() + 44 * 3600_000).toISOString(),
     revogado_em: null,
@@ -191,6 +193,7 @@ function convitesAgora(): Convite[] {
   {
     id: "conv-3",
     rotulo: "Estagiário (teste)",
+    email: null,
     papel: "operador",
     expira_em: new Date(Date.now() + 20 * 3600_000).toISOString(),
     revogado_em: new Date(Date.now() - 30 * 60_000).toISOString(),
@@ -291,7 +294,7 @@ export const mock = {
     return [...convitesAgora()];
   },
 
-  async criarConvite(rotulo: string, papel: Papel, horas: number) {
+  async criarConvite(rotulo: string, papel: Papel, horas: number, email?: string | null) {
     await espera();
     const atuais = convitesAgora();
     const id = `conv-${atuais.length + 1}`;
@@ -299,6 +302,7 @@ export const mock = {
       {
         id,
         rotulo,
+        email: email || null,
         papel,
         expira_em: new Date(Date.now() + horas * 3600_000).toISOString(),
         revogado_em: null,

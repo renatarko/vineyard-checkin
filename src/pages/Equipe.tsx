@@ -34,6 +34,7 @@ const VALIDADE_HORAS = 48;
 export default function Equipe() {
   const { lista, criar, revogar } = useConvites();
   const [rotulo, setRotulo] = useState("");
+  const [email, setEmail] = useState("");
   const [papel, setPapel] = useState<Papel>("operador");
   const [linkNovo, setLinkNovo] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -55,12 +56,13 @@ export default function Equipe() {
       return;
     }
     criar.mutate(
-      { rotulo: nome, papel, horasValidade: VALIDADE_HORAS },
+      { rotulo: nome, papel, email: email.trim() || null, horasValidade: VALIDADE_HORAS },
       {
         onSuccess: ({ link }) => {
           setLinkNovo(link);
           setCopiado(false);
           setRotulo("");
+          setEmail("");
         },
       },
     );
@@ -88,6 +90,24 @@ export default function Equipe() {
                 placeholder="Bia — portaria"
                 autoComplete="off"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail (opcional)</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="bia@exemplo.com"
+                autoComplete="off"
+              />
+              {/* Nada é enviado para este endereço: quem entrega o link é você.
+                  Ele serve para a conta ficar identificável no painel do
+                  Supabase em vez de virar um endereço inventado. */}
+              <p className="text-xs text-muted-foreground">
+                Não enviamos nada — serve só para identificar a conta.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -147,6 +167,7 @@ export default function Equipe() {
                           {descreverEstado(estado)}
                         </Badge>
                         <span>{c.papel === "admin" ? "Tudo" : "Só credenciar"}</span>
+                        {c.email && <span className="truncate">{c.email}</span>}
                       </div>
                     </div>
 
