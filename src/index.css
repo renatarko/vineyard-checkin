@@ -2,80 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Paleta da marca
+ *
+ *   #081629  navy     hsl(215 67% 10%)   texto e fundo escuro
+ *   #840976  magenta  hsl(307 87% 28%)   ação principal
+ *   #EF9709  laranja  hsl(37 93% 49%)    seleção e atenção
+ *
+ * Contraste medido (WCAG):
+ *   navy vs branco ....... 18.2  — texto principal, folgado
+ *   magenta vs branco ....  9.2  — botão magenta com rótulo branco, folgado
+ *   laranja vs branco ....  2.3  — REPROVA. Nada de texto branco sobre laranja.
+ *   laranja vs navy ...... 36.1  — é assim que o laranja se usa aqui.
+ *
+ * Verde e vermelho ficam fora da paleta de propósito: "credenciado" e
+ * "pendente" são convenção universal na portaria, e trocá-los por cores de
+ * marca custaria legibilidade num lugar onde se lê de relance.
+ */
+
 @layer base {
   :root {
-    --background: 30 20% 98%;
-    --foreground: 340 25% 12%;
+    --background: 215 30% 98%;
+    --foreground: 215 67% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 340 25% 12%;
+    --card-foreground: 215 67% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 340 25% 12%;
+    --popover-foreground: 215 67% 10%;
 
-    /* Vinho da marca do evento. Branco por cima passa com folga. */
-    --primary: 344 62% 27%;
+    /* Magenta da marca. Rótulo branco por cima. */
+    --primary: 307 87% 28%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 12% 94%;
-    --secondary-foreground: 340 25% 12%;
+    --secondary: 215 20% 94%;
+    --secondary-foreground: 215 67% 10%;
 
-    --muted: 30 12% 95%;
-    --muted-foreground: 340 6% 44%;
+    --muted: 215 20% 95%;
+    --muted-foreground: 215 15% 42%;
 
-    --accent: 30 12% 94%;
-    --accent-foreground: 340 25% 12%;
+    /* Laranja da marca: marca o que está selecionado (chips, abas) e o que
+       pede atenção. O texto por cima é sempre o navy. */
+    --accent: 37 93% 49%;
+    --accent-foreground: 215 67% 10%;
+
+    /* Fundo neutro de hover — o laranja chapado seria ruído numa lista longa. */
+    --hover: 215 20% 94%;
 
     --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
 
     /* Verde do credenciado. É o sinal mais importante da tela de portaria:
-       precisa ser lido de relance, a um braço de distância. */
+       precisa ser lido a um braço de distância, com a fila andando. */
     --success: 149 62% 27%;
     --success-foreground: 0 0% 100%;
-    --warning: 32 85% 42%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 37 93% 49%;
+    --warning-foreground: 215 67% 10%;
 
-    --border: 30 12% 88%;
-    --input: 30 12% 88%;
-    --ring: 344 62% 27%;
+    --border: 215 20% 88%;
+    --input: 215 20% 86%;
+    --ring: 307 87% 28%;
 
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 340 18% 9%;
-    --foreground: 30 15% 95%;
+    --background: 215 67% 10%;
+    --foreground: 215 25% 96%;
 
-    --card: 340 16% 12%;
-    --card-foreground: 30 15% 95%;
+    --card: 215 50% 14%;
+    --card-foreground: 215 25% 96%;
 
-    --popover: 340 16% 12%;
-    --popover-foreground: 30 15% 95%;
+    --popover: 215 50% 14%;
+    --popover-foreground: 215 25% 96%;
 
-    --primary: 344 55% 62%;
-    --primary-foreground: 340 25% 10%;
+    /* Magenta clareado: a 28% de luminosidade ele desaparece no fundo navy. */
+    --primary: 307 65% 58%;
+    --primary-foreground: 215 67% 10%;
 
-    --secondary: 340 10% 18%;
-    --secondary-foreground: 30 15% 95%;
+    --secondary: 215 40% 20%;
+    --secondary-foreground: 215 25% 96%;
 
-    --muted: 340 10% 18%;
-    --muted-foreground: 30 8% 65%;
+    --muted: 215 40% 20%;
+    --muted-foreground: 215 15% 70%;
 
-    --accent: 340 10% 18%;
-    --accent-foreground: 30 15% 95%;
+    --accent: 37 93% 55%;
+    --accent-foreground: 215 67% 10%;
+
+    --hover: 215 40% 20%;
 
     --destructive: 0 62% 52%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 149 50% 45%;
-    --success-foreground: 340 25% 10%;
-    --warning: 32 75% 55%;
-    --warning-foreground: 340 25% 10%;
+    --success-foreground: 215 67% 10%;
+    --warning: 37 93% 55%;
+    --warning-foreground: 215 67% 10%;
 
-    --border: 340 10% 22%;
-    --input: 340 10% 22%;
-    --ring: 344 55% 62%;
+    --border: 215 35% 24%;
+    --input: 215 35% 26%;
+    --ring: 307 65% 58%;
   }
 }
 

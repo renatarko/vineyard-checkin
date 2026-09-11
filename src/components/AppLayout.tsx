@@ -44,7 +44,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   pathname === para
                     ? "bg-secondary text-secondary-foreground"
-                    : "text-muted-foreground hover:bg-secondary/60",
+                    : "text-muted-foreground hover:bg-hover",
                 )}
               >
                 <Icone className="h-4 w-4" aria-hidden />

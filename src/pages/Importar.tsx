@@ -46,7 +46,7 @@ export default function Importar() {
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed p-10 text-center transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed p-10 text-center transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Upload className="h-8 w-8 text-muted-foreground" aria-hidden />
             <span className="font-medium">Escolher arquivo CSV</span>

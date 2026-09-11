@@ -17,9 +17,12 @@ export function ChipsLote({
     cn(
       "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      // Laranja marca o que está selecionado; o magenta fica reservado para
+      // ação. O rótulo por cima do laranja é o navy — branco reprova no
+      // contraste.
       ativo
-        ? "border-primary bg-primary text-primary-foreground"
-        : "border-input bg-card hover:bg-accent",
+        ? "border-accent bg-accent text-accent-foreground"
+        : "border-input bg-card hover:bg-hover",
     );
 
   return (
@@ -73,8 +76,8 @@ export function AbasSituacao({
             "flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             valor === s.valor
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-hover",
           )}
         >
           {s.rotulo}
