@@ -39,9 +39,11 @@ function Carregando() {
  * vazia.
  */
 function RotaDaEquipe({ children }: { children: ReactNode }) {
-  const { sessao, ehEquipe, carregando } = useAuth();
+  const { ehEquipe, carregando } = useAuth();
   if (carregando) return <Carregando />;
-  if (sessao === null) return <Navigate to="/sem-acesso" replace />;
+  // `ehEquipe` exige perfil ativo, e perfil só existe com sessão — checar a
+  // sessão à parte era redundante, e barrava o modo de demonstração, que tem
+  // perfil sem sessão de verdade.
   if (!ehEquipe) return <Navigate to="/sem-acesso" replace />;
   return <>{children}</>;
 }
