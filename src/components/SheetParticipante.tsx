@@ -158,7 +158,7 @@ export function SheetParticipante({
 
         <div className="mt-6 flex flex-col gap-2 pb-2">
           {!credenciado ? (
-            <Button size="lg" onClick={aoCredenciar} disabled={salvando}>
+            <Button size="lg" className="bg-green-600 hover:bg-green-700" onClick={aoCredenciar} disabled={salvando}>
               {salvando ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
               ) : (
@@ -204,7 +204,7 @@ export function SheetParticipante({
         </div>
 
         {participante.nome_real !== null && (
-          <Badge variant="secondary" className="mb-2">
+          <Badge variant="secondary" className="mb-2 ">
             Nome da planilha: {participante.nome_origem}
           </Badge>
         )}

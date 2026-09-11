@@ -3,7 +3,10 @@ import animate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
-  content: ["./src/**/*.{ts,tsx}"],
+  // index.html precisa entrar: o Tailwind descarta regras de `@layer base`
+  // cujas classes não aparecem no conteúdo escaneado, e a classe `dark` que
+  // liga o tema escuro mora lá. Sem isto o bloco `.dark` some do CSS gerado.
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: { center: true, padding: "1rem", screens: { "2xl": "1200px" } },
