@@ -134,13 +134,51 @@ describe("filtrarParticipantes", () => {
     expect(filtrarParticipantes(LISTA, "zzzz")).toHaveLength(0);
   });
 
-  it("credenciado vai para o fim da lista", () => {
-    const ordenada = nomes(filtrarParticipantes(LISTA, ""));
-    expect(ordenada[ordenada.length - 1]).toBe("Marina Alves");
+  it("ordena sempre por ordem alfabética", () => {
+    expect(nomes(filtrarParticipantes(LISTA, ""))).toEqual([
+      "Ana Gabriela - Renata Karolina",
+      "José Antônio Sá",
+      "Marina Alves",
+      "Renata Karolina",
+    ]);
   });
 
-  it("coletiva ainda sem identificação vem antes das demais", () => {
-    expect(nomes(filtrarParticipantes(LISTA, ""))[0]).toBe("Renata Karolina");
+  it("credenciar não muda a posição de ninguém", () => {
+    // A lista é a mesma de antes, mas com a Marina já credenciada: quem está
+    // no balcão não pode ver a linha pular de lugar.
+    const comCheckin = indexar(
+      LISTA.map((x) =>
+        x.nome_origem === "Renata Karolina" && x.nome_real === null
+          ? { ...x, checkin_em: "2026-09-11T21:00:00Z" }
+          : x,
+      ),
+    );
+    expect(nomes(filtrarParticipantes(comCheckin, ""))).toEqual(
+      nomes(filtrarParticipantes(LISTA, "")),
+    );
+  });
+
+  it("acento não joga o nome para o fim", () => {
+    const lista = indexar([
+      p({ nome_origem: "Zuleica Dias" }),
+      p({ nome_origem: "Álvaro Neves" }),
+      p({ nome_origem: "Bruno Alves" }),
+    ]);
+    expect(nomes(filtrarParticipantes(lista, ""))).toEqual([
+      "Álvaro Neves",
+      "Bruno Alves",
+      "Zuleica Dias",
+    ]);
+  });
+
+  it("ordena pelo nome exibido, não pelo da planilha", () => {
+    // Depois de identificada, a pessoa é procurada pelo nome real — é por ele
+    // que a linha tem que estar ordenada.
+    const lista = indexar([
+      p({ nome_origem: "Zuleica Dias", nome_real: "Ana Paula" }),
+      p({ nome_origem: "Bruno Alves" }),
+    ]);
+    expect(nomes(filtrarParticipantes(lista, "")).at(0)).toBe("Ana Paula - Zuleica Dias");
   });
 });
 

@@ -37,22 +37,20 @@ export function indexar(lista: Participante[]): ParticipanteBuscavel[] {
 }
 
 /**
- * Ordem da lista: quem ainda não entrou primeiro, e dentro disso as coletivas
- * pendentes de identificação antes das demais — são as que tomam mais tempo no
- * balcão. Credenciados afundam, porque já saíram do caminho.
+ * Ordem da lista: sempre alfabética pelo nome exibido.
+ *
+ * A lista não se reordena quando alguém é credenciado — o nome continua onde
+ * estava, e quem está no balcão não perde a posição que já tinha achado. Para
+ * ver só quem falta, existem as abas de situação.
+ *
+ * `localeCompare` com "pt-BR" é o que põe "Álvaro" junto de "Alvaro" em vez de
+ * jogá-lo para depois de "Zuleica", como faria uma comparação por código.
  */
-export function compararParaFila(a: Participante, b: Participante): number {
-  const feito = Number(a.checkin_em !== null) - Number(b.checkin_em !== null);
-  if (feito !== 0) return feito;
-
-  if (a.checkin_em === null) {
-    const pendente =
-      Number(b.precisa_identificacao && b.nome_real === null) -
-      Number(a.precisa_identificacao && a.nome_real === null);
-    if (pendente !== 0) return pendente;
-  }
-
-  return a.nome_exibicao.localeCompare(b.nome_exibicao, "pt-BR");
+export function compararPorNome(a: Participante, b: Participante): number {
+  return a.nome_exibicao.localeCompare(b.nome_exibicao, "pt-BR", {
+    sensitivity: "base",
+    numeric: true,
+  });
 }
 
 /**
@@ -69,7 +67,7 @@ export function filtrarParticipantes(
 ): ParticipanteBuscavel[] {
   const alvo = normalizarTexto(termo);
   if (alvo === "" && idsPorDocumento === undefined) {
-    return [...lista].sort(compararParaFila);
+    return [...lista].sort(compararPorNome);
   }
 
   // Cada palavra precisa aparecer em algum lugar: "ana 1003" acha a Ana da
@@ -83,7 +81,7 @@ export function filtrarParticipantes(
       const texto = p._busca ?? textoBuscavel(p);
       return palavras.every((palavra) => texto.includes(palavra));
     })
-    .sort(compararParaFila);
+    .sort(compararPorNome);
 }
 
 /** Abas de situação da lista, como na barra acima da tabela. */
