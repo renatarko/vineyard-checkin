@@ -14,6 +14,7 @@ function convite(over: Partial<Convite> = {}): Convite {
   return {
     id: "c1",
     rotulo: "Bia (portaria)",
+    email: null,
     papel: "operador",
     expira_em: "2026-09-13T12:00:00Z",
     revogado_em: null,

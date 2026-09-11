@@ -100,6 +100,7 @@ export type Database = {
           auth_user_id: string | null
           criado_em: string
           criado_por: string | null
+          email: string | null
           expira_em: string
           id: string
           max_usos: number
@@ -116,6 +117,7 @@ export type Database = {
           auth_user_id?: string | null
           criado_em?: string
           criado_por?: string | null
+          email?: string | null
           expira_em?: string
           id?: string
           max_usos?: number
@@ -132,6 +134,7 @@ export type Database = {
           auth_user_id?: string | null
           criado_em?: string
           criado_por?: string | null
+          email?: string | null
           expira_em?: string
           id?: string
           max_usos?: number
@@ -353,6 +356,7 @@ export type Database = {
         Returns: {
           auth_user_id: string
           convite_id: string
+          email: string
           papel: string
           rotulo: string
         }[]

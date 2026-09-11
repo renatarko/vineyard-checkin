@@ -32,6 +32,8 @@ export interface Perfil {
 export interface Convite {
   id: string;
   rotulo: string;
+  /** E-mail real de quem foi convidado. Nulo cai no endereço sintético. */
+  email: string | null;
   papel: Papel;
   expira_em: string;
   revogado_em: string | null;
