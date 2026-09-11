@@ -98,6 +98,21 @@ Deno.serve(async (req) => {
           return erro("FALHA_INTERNA", 500);
         }
         userId = existente.id;
+
+        // Usuário criado à mão no painel costuma vir sem e-mail confirmado, e
+        // generateLink tropeça nisso. Confirmar aqui é legítimo: o acesso foi
+        // provado pelo token do convite, não pela caixa de entrada — que, de
+        // resto, nunca recebe nada neste sistema.
+        if (!existente.email_confirmed_at) {
+          const { error: erroConfirmar } = await admin.auth.admin.updateUserById(
+            existente.id,
+            { email_confirm: true },
+          );
+          if (erroConfirmar) {
+            console.error("falha ao confirmar e-mail:", erroConfirmar.message);
+            return erro("FALHA_INTERNA", 500);
+          }
+        }
       } else if (criado?.user) {
         userId = criado.user.id;
       } else {
