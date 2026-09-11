@@ -2,7 +2,12 @@
 <html lang="pt-BR" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- interactive-widget: no Android o teclado encolhe a janela em vez de
+         cobri-la, então `fixed bottom-0` e `dvh` já sobem sozinhos. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <meta name="theme-color" content="#081629" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <script>
