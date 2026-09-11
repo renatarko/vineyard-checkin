@@ -8,6 +8,7 @@ import Convite from "@/pages/Convite";
 import Credenciamento from "@/pages/Credenciamento";
 import Importar from "@/pages/Importar";
 import Equipe from "@/pages/Equipe";
+import Login from "@/pages/Login";
 import SemAcesso from "@/pages/SemAcesso";
 import NaoEncontrado from "@/pages/NaoEncontrado";
 
@@ -58,6 +59,7 @@ const App = () => (
       <AuthProvider>
         <Routes>
           <Route path="/convite/:token" element={<Convite />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/sem-acesso" element={<SemAcesso />} />
           <Route
             path="/"

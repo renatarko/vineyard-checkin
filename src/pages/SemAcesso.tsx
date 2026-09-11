@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,13 +26,18 @@ export default function SemAcesso() {
             quem organiza o evento.
           </CardDescription>
         </CardHeader>
-        {sessao !== null && (
-          <CardContent>
-            <Button variant="outline" className="w-full" onClick={sair}>
+        <CardContent className="space-y-2">
+          {/* Quem administra e caiu aqui depois de um logout tem como voltar
+              sozinho; operador pede um link novo. */}
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/login">Entrar com código</Link>
+          </Button>
+          {sessao !== null && (
+            <Button variant="ghost" className="w-full" onClick={sair}>
               Sair desta conta
             </Button>
-          </CardContent>
-        )}
+          )}
+        </CardContent>
       </Card>
     </div>
   );
