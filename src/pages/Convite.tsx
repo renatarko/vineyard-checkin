@@ -15,8 +15,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
  * único, um resgate automático queimaria o acesso antes de a pessoa abrir.
  * Crawler não aperta botão.
  */
+
+/**
+ * O hash do convite tem exatamente esta cara: 64 caracteres hexadecimais.
+ * Quem administra copia os dois valores da mesma tela — o hash vai para o SQL,
+ * o token vai para a URL — e trocar um pelo outro é fácil.
+ */
+const PARECE_HASH = /^[0-9a-f]{64}$/i;
+
 export default function Convite() {
   const { token = "" } = useParams();
+  const pareceHash = PARECE_HASH.test(token);
   const navegar = useNavigate();
   const [entrando, setEntrando] = useState(false);
   const [falhou, setFalhou] = useState(false);
@@ -115,12 +124,25 @@ export default function Convite() {
               </p>
             </>
           ) : (
-            // Mesma mensagem para inválido, expirado, revogado e já usado: a
-            // tela não pode servir de oráculo sobre quais tokens existem.
-            <p className="text-center text-sm text-muted-foreground">
-              O link pode ter expirado, já ter sido usado ou ter sido cancelado. Peça um
-              convite novo para quem organiza o evento.
-            </p>
+            <>
+              {/* Mesma mensagem para inválido, expirado, revogado e já usado: a
+                  tela não pode servir de oráculo sobre quais tokens existem. */}
+              <p className="text-center text-sm text-muted-foreground">
+                O link pode ter expirado, já ter sido usado ou ter sido cancelado. Peça um
+                convite novo para quem organiza o evento.
+              </p>
+
+              {/* Checagem de formato, não de existência: não diz nada sobre o
+                  banco, e poupa quem administra de caçar um convite que está
+                  intacto. */}
+              {pareceHash && (
+                <p className="rounded-lg border bg-muted/50 p-3 text-center text-sm">
+                  Este endereço parece conter o <strong>hash</strong> do convite, que é o
+                  valor guardado no banco. O link precisa do <strong>token</strong>, que
+                  aparece uma única vez ao criar o convite.
+                </p>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
