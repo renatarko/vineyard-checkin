@@ -43,7 +43,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 key={para}
                 to={para}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "flex flex-1 items-center flex-col sm:flex-row justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   pathname === para
                     ? "bg-secondary text-secondary-foreground"
                     : "text-muted-foreground hover:bg-hover",
