@@ -1,4 +1,4 @@
-import { normalizarTexto } from "@/lib/nomes";
+import { nomeExibicao, normalizarTexto } from "@/lib/nomes";
 import type { Participante } from "@/lib/types";
 
 /**
@@ -33,24 +33,46 @@ export function textoBuscavel(p: Participante): string {
 }
 
 export function indexar(lista: Participante[]): ParticipanteBuscavel[] {
-  return lista.map((p) => ({ ...p, _busca: textoBuscavel(p) }));
+  return lista.map((p) => ({
+    ...p,
+    // O nome exibido é recomposto aqui, e não aceito como veio do banco: a
+    // coluna gerada lá ainda põe o nome informado na frente e não ignora
+    // acento. Quem manda na tela é `nomeExibicao` (ver lib/nomes.ts).
+    nome_exibicao: nomeExibicao(p.nome_real, p.nome_origem),
+    _busca: textoBuscavel(p),
+  }));
 }
 
 /**
- * Ordem da lista: sempre alfabética pelo nome exibido.
+ * Ordem da lista: alfabética pelo nome da PLANILHA, nunca pelo exibido.
  *
- * A lista não se reordena quando alguém é credenciado — o nome continua onde
- * estava, e quem está no balcão não perde a posição que já tinha achado. Para
- * ver só quem falta, existem as abas de situação.
+ * A lista é ancorada no único nome que não muda. Informar quem está usando o
+ * ingresso não move a linha de lugar, e os ingressos de uma mesma compra
+ * coletiva continuam em bloco mesmo depois de identificados um a um — que é
+ * como a portaria os procura, pelo nome de quem comprou.
+ *
+ * A fatura desempata para duas pessoas de mesmo nome não se intercalarem, e o
+ * id fecha a ordem: sem ele o `sort` ficaria livre para trocar linhas iguais
+ * de posição a cada render, que é justamente o que não pode acontecer com a
+ * fila andando.
+ *
+ * A lista também não se reordena quando alguém é credenciado. Para ver só quem
+ * falta, existem as abas de situação.
  *
  * `localeCompare` com "pt-BR" é o que põe "Álvaro" junto de "Alvaro" em vez de
  * jogá-lo para depois de "Zuleica", como faria uma comparação por código.
  */
 export function compararPorNome(a: Participante, b: Participante): number {
-  return a.nome_exibicao.localeCompare(b.nome_exibicao, "pt-BR", {
+  const porNome = a.nome_origem.localeCompare(b.nome_origem, "pt-BR", {
     sensitivity: "base",
     numeric: true,
   });
+  if (porNome !== 0) return porNome;
+
+  const porFatura = a.fatura_norm.localeCompare(b.fatura_norm, "pt-BR", { numeric: true });
+  if (porFatura !== 0) return porFatura;
+
+  return a.id.localeCompare(b.id);
 }
 
 /**

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MODO_MOCK } from "@/lib/mock-flag";
 import { mock } from "@/lib/mock";
 import { CHAVE_PARTICIPANTES } from "@/hooks/useParticipantes";
+import { nomeExibicao } from "@/lib/nomes";
 import type { Participante } from "@/lib/types";
 
 const MENSAGENS: Record<string, string> = {
@@ -17,6 +18,16 @@ function traduzir(mensagem: string): string {
   const chave = Object.keys(MENSAGENS).find((c) => mensagem.includes(c));
   return chave ? MENSAGENS[chave] : "Não deu para salvar. Tente de novo.";
 }
+
+/**
+ * Nome para o aviso, recomposto aqui.
+ *
+ * A RPC devolve a linha com o `nome_exibicao` que o banco gerou, e lá o nome
+ * informado ainda vem na frente. Quem manda na tela é `nomeExibicao` — o mesmo
+ * que a lista usa —, senão o toast diria um nome e a linha logo abaixo diria
+ * outro.
+ */
+const comoAparece = (p: Participante) => nomeExibicao(p.nome_real, p.nome_origem);
 
 export function useCredenciamento() {
   const queryClient = useQueryClient();
@@ -38,7 +49,7 @@ export function useCredenciamento() {
     retry: 3,
     onSuccess: (p) => {
       atualizar();
-      toast.success(`${p.nome_exibicao} credenciado`);
+      toast.success(`${comoAparece(p)} credenciado`);
     },
     onError: (e: Error) => toast.error(traduzir(e.message)),
   });
@@ -55,7 +66,7 @@ export function useCredenciamento() {
     },
     onSuccess: (p) => {
       atualizar();
-      toast.success(`Check-in de ${p.nome_exibicao} desfeito`);
+      toast.success(`Check-in de ${comoAparece(p)} desfeito`);
     },
     onError: (e: Error) => toast.error(traduzir(e.message)),
   });
@@ -72,7 +83,7 @@ export function useCredenciamento() {
     },
     onSuccess: (p) => {
       atualizar();
-      toast.success(`Agora é ${p.nome_exibicao}`);
+      toast.success(`Agora é ${comoAparece(p)}`);
     },
     onError: (e: Error) => toast.error(traduzir(e.message)),
   });
