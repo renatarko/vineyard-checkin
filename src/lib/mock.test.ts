@@ -28,7 +28,7 @@ describe("dados de demonstração", () => {
   it("mostra o nome real acrescentado ao da planilha", async () => {
     const lista = await mock.listarParticipantes();
     const identificada = lista.find((p) => p.nome_real === "Ana Gabriela Prado");
-    expect(identificada?.nome_exibicao).toBe("Ana Gabriela Prado - Renata Karolina Rocha");
+    expect(identificada?.nome_exibicao).toBe("Renata Karolina Rocha - Ana Gabriela Prado");
   });
 
   it("não duplica o nome quando o comprador é o próprio participante", async () => {
@@ -58,7 +58,7 @@ describe("credenciar", () => {
 
     const depois = await mock.credenciar(anonima.id, "Carla Dias");
     expect(depois.nome_origem).toBe(anonima.nome_origem);
-    expect(depois.nome_exibicao).toBe(`Carla Dias - ${anonima.nome_origem}`);
+    expect(depois.nome_exibicao).toBe(`${anonima.nome_origem} - Carla Dias`);
     expect(depois.checkin_em).not.toBeNull();
   });
 

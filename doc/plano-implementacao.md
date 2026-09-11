@@ -16,8 +16,9 @@ O que o sistema precisa entregar:
 
 1. Marcar check-in de um participante específico, buscando por **nome, CPF ou fatura**.
 2. Ao credenciar alguém de uma inscrição coletiva, **acrescentar o nome real sem apagar o
-   original** — exibição `"Ana Gabriela - Renata Karolina"`, onde `Renata Karolina` é o nome
-   que veio do CSV.
+   original** — exibição `"Renata Karolina - Ana Gabriela"`, onde `Renata Karolina` é o nome
+   que veio do CSV e vem primeiro, para a linha continuar no bloco do comprador quando é
+   identificada.
 3. Dar acesso à equipe por **link de convite único**, copiado e enviado por WhatsApp — sem
    nenhuma infraestrutura de e-mail.
 4. Contadores ao vivo de credenciados / total.
@@ -88,19 +89,28 @@ escolhido na hora, depois abrir `/convite/<esse-token>`. Nunca commitar o token.
 - `nome_origem` — o que veio do CSV. **Imutável**: nenhuma RPC de check-in o inclui no `UPDATE`.
 - `nome_real` — informado na portaria, editável.
 
-`nome_exibicao` é **coluna gerada `STORED`**:
+O nome de exibição é composto por `nomeExibicao` (`src/lib/nomes.ts`), no front:
 
 | `nome_real` | `nome_origem` | exibição |
 |---|---|---|
 | `null` | `Renata Karolina` | `Renata Karolina` |
-| `Ana Gabriela` | `Renata Karolina` | `Ana Gabriela - Renata Karolina` |
+| `Ana Gabriela` | `Renata Karolina` | `Renata Karolina - Ana Gabriela` |
 | `Renata Karolina` | `Renata Karolina` | `Renata Karolina` |
 
 A terceira linha é o caso que a regra ingênua não cobre: quando o comprador é ele mesmo um
 dos participantes, ela produziria `"Renata Karolina - Renata Karolina"`.
 
-(`lower`, `btrim` e `||` são `IMMUTABLE` e podem entrar na coluna gerada. `unaccent` é
-`STABLE` e **não pode** — a comparação insensível a acento fica na função pura do front.)
+Existe também a coluna gerada `STORED` `participantes.nome_exibicao`, do desenho original —
+mas ela **não é o que aparece na tela**. Ficou com a ordem antiga (nome informado na frente)
+e nunca soube ignorar acento: `lower`, `btrim` e `||` são `IMMUTABLE` e cabem numa coluna
+gerada, `unaccent` é `STABLE` e não cabe. Tudo que vem do servidor é recomposto antes de
+aparecer — na lista (`indexar`, em `lib/busca.ts`) e nos avisos de check-in
+(`useCredenciamento`). Trocar a coluna exigiria derrubá-la e recriá-la (`set expression` só
+existe do Postgres 17 em diante), e não há motivo: nada de produto depende dela.
+
+A ordem — planilha primeiro, informado depois — é o que mantém a linha no lugar. A lista é
+ordenada por `nome_origem` (`compararPorNome`), então informar quem está usando o ingresso
+não arranca a linha do bloco da compra coletiva no meio da fila.
 
 ### 3. Importação idempotente — a parte que mais pode dar errado
 

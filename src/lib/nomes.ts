@@ -38,10 +38,21 @@ export function mesmoNome(a: string | null | undefined, b: string | null | undef
 }
 
 /**
- * Como o nome aparece na lista. Espelha exatamente a coluna gerada
- * `participantes.nome_exibicao` — com uma diferença deliberada: o banco não
- * consegue ignorar acento numa coluna gerada, então lá "José"/"Jose" saem
- * concatenados e aqui não. Quem manda na tela é esta função.
+ * Como o nome aparece na lista: PRIMEIRO o da planilha, depois o informado.
+ *
+ * A ordem não é estética. A lista é alfabética, e numa coletiva os dez
+ * ingressos da mesma compra chegam com o mesmo nome de comprador — é assim que
+ * a portaria os encontra em bloco. Com o nome informado na frente, cada
+ * identificação arrancava a linha do bloco e a jogava noutra letra, no meio da
+ * fila. Começando pelo comprador, o bloco continua inteiro e o nome novo
+ * aparece ao lado de quem comprou.
+ *
+ * O banco não acompanha: a coluna gerada `participantes.nome_exibicao` ficou
+ * com a ordem antiga, e de todo jeito nunca soube ignorar acento — `unaccent`
+ * não é IMMUTABLE e não cabe numa coluna gerada, então lá "José"/"Jose" saem
+ * concatenados. Nada disso chega à tela: tudo que vem do servidor passa por
+ * esta função antes de aparecer, na lista (`indexar`) e nos avisos de
+ * check-in. Quem manda na tela é ela.
  */
 export function nomeExibicao(
   nomeReal: string | null | undefined,
@@ -50,7 +61,7 @@ export function nomeExibicao(
   const real = normalizarNomeDigitado(nomeReal);
   if (real === null) return nomeOrigem;
   if (mesmoNome(real, nomeOrigem)) return nomeOrigem;
-  return `${real} - ${nomeOrigem}`;
+  return `${nomeOrigem} - ${real}`;
 }
 
 /** Valida o campo "nome real" antes de mandar para o banco. */

@@ -42,16 +42,20 @@ const LISTA = indexar([
     comprador_nome: "Luciana Sá",
   }),
   p({
+    id: "renata-1",
     nome_origem: "Renata Karolina",
     nome_real: "Ana Gabriela",
     documento_hash: "hash-renata",
     fatura: "INV-1003",
+    fatura_norm: "inv-1003",
     precisa_identificacao: true,
   }),
   p({
+    id: "renata-2",
     nome_origem: "Renata Karolina",
     documento_hash: "hash-renata",
     fatura: "INV-1003",
+    fatura_norm: "inv-1003",
     precisa_identificacao: true,
   }),
   p({
@@ -80,14 +84,14 @@ describe("filtrarParticipantes", () => {
 
   it("acha pelo nome real informado na portaria", () => {
     expect(nomes(filtrarParticipantes(LISTA, "Ana Gabriela"))).toEqual([
-      "Ana Gabriela - Renata Karolina",
+      "Renata Karolina - Ana Gabriela",
     ]);
   });
 
   it("acha pelo nome original mesmo depois de identificado", () => {
     const achados = filtrarParticipantes(LISTA, "Renata Karolina");
     expect(achados).toHaveLength(2);
-    expect(nomes(achados)).toContain("Ana Gabriela - Renata Karolina");
+    expect(nomes(achados)).toContain("Renata Karolina - Ana Gabriela");
   });
 
   it("acha pelo nome do comprador", () => {
@@ -126,7 +130,7 @@ describe("filtrarParticipantes", () => {
 
   it("combina palavras de campos diferentes", () => {
     expect(nomes(filtrarParticipantes(LISTA, "ana 1003"))).toEqual([
-      "Ana Gabriela - Renata Karolina",
+      "Renata Karolina - Ana Gabriela",
     ]);
   });
 
@@ -134,11 +138,11 @@ describe("filtrarParticipantes", () => {
     expect(filtrarParticipantes(LISTA, "zzzz")).toHaveLength(0);
   });
 
-  it("ordena sempre por ordem alfabética", () => {
+  it("ordena em ordem alfabética pelo nome da planilha", () => {
     expect(nomes(filtrarParticipantes(LISTA, ""))).toEqual([
-      "Ana Gabriela - Renata Karolina",
       "José Antônio Sá",
       "Marina Alves",
+      "Renata Karolina - Ana Gabriela",
       "Renata Karolina",
     ]);
   });
@@ -171,14 +175,49 @@ describe("filtrarParticipantes", () => {
     ]);
   });
 
-  it("ordena pelo nome exibido, não pelo da planilha", () => {
-    // Depois de identificada, a pessoa é procurada pelo nome real — é por ele
-    // que a linha tem que estar ordenada.
+  it("ordena pelo nome da planilha, não pelo exibido", () => {
+    // A linha identificada fica onde o comprador está, e não na letra do nome
+    // informado — senão ela some do bloco assim que é preenchida.
     const lista = indexar([
       p({ nome_origem: "Zuleica Dias", nome_real: "Ana Paula" }),
       p({ nome_origem: "Bruno Alves" }),
     ]);
-    expect(nomes(filtrarParticipantes(lista, "")).at(0)).toBe("Ana Paula - Zuleica Dias");
+    expect(nomes(filtrarParticipantes(lista, ""))).toEqual([
+      "Bruno Alves",
+      "Zuleica Dias - Ana Paula",
+    ]);
+  });
+
+  it("identificar alguém não move a linha nem desfaz o bloco da coletiva", () => {
+    // Os cinco ingressos saíram da mesma compra da Aline. Preencher o nome de
+    // um deles não pode espalhar o bloco pela lista nem mudar a ordem: a
+    // operadora está com a fila andando e já achou onde tinha que olhar.
+    const coletiva = indexar([
+      p({ id: "c1", nome_origem: "Aline Costa", fatura_norm: "inv-9", precisa_identificacao: true }),
+      p({ id: "c2", nome_origem: "Aline Costa", fatura_norm: "inv-9", precisa_identificacao: true }),
+      p({ id: "c3", nome_origem: "Aline Costa", fatura_norm: "inv-9", precisa_identificacao: true }),
+      p({ nome_origem: "Bruno Alves" }),
+      p({ nome_origem: "Zuleica Dias" }),
+    ]);
+    const antes = filtrarParticipantes(coletiva, "");
+
+    const comNome = indexar(
+      coletiva.map((x) =>
+        x.id === "c2"
+          ? { ...x, nome_real: "Renata", nome_exibicao: nomeExibicao("Renata", x.nome_origem) }
+          : x,
+      ),
+    );
+    const depois = filtrarParticipantes(comNome, "");
+
+    expect(depois.map((x) => x.id)).toEqual(antes.map((x) => x.id));
+    expect(nomes(depois)).toEqual([
+      "Aline Costa",
+      "Aline Costa - Renata",
+      "Aline Costa",
+      "Bruno Alves",
+      "Zuleica Dias",
+    ]);
   });
 });
 

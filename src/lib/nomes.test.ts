@@ -43,9 +43,10 @@ describe("nomeExibicao", () => {
     expect(nomeExibicao("   ", "Renata Karolina")).toBe("Renata Karolina");
   });
 
-  it("acrescenta o nome real sem apagar o original", () => {
+  it("acrescenta o nome real depois do da planilha", () => {
+    // Nessa ordem: é o nome do comprador que ancora a linha na lista.
     expect(nomeExibicao("Ana Gabriela", "Renata Karolina")).toBe(
-      "Ana Gabriela - Renata Karolina",
+      "Renata Karolina - Ana Gabriela",
     );
   });
 
@@ -60,7 +61,7 @@ describe("nomeExibicao", () => {
 
   it("limpa os espaços do nome digitado antes de concatenar", () => {
     expect(nomeExibicao("  Ana   Gabriela  ", "Renata Karolina")).toBe(
-      "Ana Gabriela - Renata Karolina",
+      "Renata Karolina - Ana Gabriela",
     );
   });
 });

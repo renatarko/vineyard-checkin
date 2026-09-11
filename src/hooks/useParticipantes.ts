@@ -37,7 +37,9 @@ export function useParticipantes() {
       const { data, error } = await supabase
         .from("participantes")
         .select(COLUNAS)
-        .order("nome_exibicao");
+        // Pelo nome da planilha, como `compararPorNome` — que reordena tudo
+        // no cliente de qualquer jeito, mas não antes da primeira pintura.
+        .order("nome_origem");
       if (error) throw error;
       return (data ?? []) as unknown as Participante[];
     },
