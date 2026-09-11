@@ -22,7 +22,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <FaixaMock />
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-2 px-4">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4">
           <span className="truncate text-sm font-semibold">Vineyard Check-in</span>
           <div className="flex items-center gap-2">
             <span className="hidden truncate text-sm text-muted-foreground sm:inline">
@@ -35,7 +35,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
 
         {abas.length > 1 && (
-          <nav className="mx-auto flex max-w-3xl gap-1 px-2 pb-2">
+          <nav className="mx-auto flex max-w-5xl gap-1 px-2 pb-2">
             {abas.map(({ para, rotulo, Icone }) => (
               <Link
                 key={para}
@@ -55,7 +55,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-4">{children}</main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4">{children}</main>
     </div>
   );
 }

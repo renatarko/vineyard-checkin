@@ -2,38 +2,77 @@ import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { ContadorAoVivo } from "@/components/ContadorAoVivo";
-import { CardParticipante } from "@/components/CardParticipante";
+import { TabelaParticipantes } from "@/components/TabelaParticipantes";
+import { AbasSituacao, ChipsLote } from "@/components/FiltrosLista";
 import { SheetParticipante } from "@/components/SheetParticipante";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBuscaPorDocumento, useParticipantes } from "@/hooks/useParticipantes";
-import { filtrarParticipantes } from "@/lib/busca";
+import { useCredenciamento } from "@/hooks/useCredenciamento";
+import {
+  filtrarParticipantes,
+  filtrarPorLote,
+  filtrarPorSituacao,
+  lotesDisponiveis,
+  type Situacao,
+} from "@/lib/busca";
 import { documentoIncompleto, pareceDocumentoCompleto } from "@/lib/documento";
 import type { Participante } from "@/lib/types";
 
-/** Quantas linhas renderizar de uma vez. Sem isto, 3.000 cards travam o celular. */
+/** Quantas linhas renderizar de uma vez. Sem isto, 3.000 linhas travam o celular. */
 const PAGINA = 60;
 
 export default function Credenciamento() {
   const { lista, contadores, isLoading } = useParticipantes();
+  const { credenciar, desfazer } = useCredenciamento();
+
   const [termo, setTermo] = useState("");
+  const [lote, setLote] = useState<string | null>(null);
+  const [situacao, setSituacao] = useState<Situacao>("todos");
   const [visiveis, setVisiveis] = useState(PAGINA);
   const [selecionado, setSelecionado] = useState<Participante | null>(null);
 
   const idsPorDocumento = useBuscaPorDocumento(termo);
+  const lotes = useMemo(() => lotesDisponiveis(lista), [lista]);
 
   const resultados = useMemo(() => {
     setVisiveis(PAGINA);
-    return filtrarParticipantes(lista, termo, idsPorDocumento);
-  }, [lista, termo, idsPorDocumento]);
+    const porBusca = filtrarParticipantes(lista, termo, idsPorDocumento);
+    return filtrarPorSituacao(filtrarPorLote(porBusca, lote), situacao);
+  }, [lista, termo, idsPorDocumento, lote, situacao]);
 
   // A lista vem do Realtime, então o objeto selecionado precisa ser relido a
-  // cada render — senão o sheet mostra o estado de antes do check-in.
+  // cada render — senão o painel mostra o estado de antes do check-in.
   const atual =
     selecionado === null
       ? null
       : (lista.find((p) => p.id === selecionado.id) ?? selecionado);
+
+  const ocupadoId = credenciar.isPending
+    ? credenciar.variables?.id ?? null
+    : desfazer.isPending
+      ? desfazer.variables ?? null
+      : null;
+
+  /**
+   * Clique direto no quadradinho da tabela.
+   *
+   * Numa coletiva ainda anônima, credenciar sem saber quem é deixaria a lista
+   * com dois "Renata Karolina" idênticos e nenhum jeito de diferenciar quem
+   * entrou. Nesse caso o clique abre o painel para informar o nome.
+   */
+  const alternar = (p: Participante) => {
+    if (p.checkin_em !== null) {
+      desfazer.mutate(p.id);
+      return;
+    }
+    if (p.precisa_identificacao && p.nome_real === null) {
+      setSelecionado(p);
+      return;
+    }
+    credenciar.mutate({ id: p.id });
+  };
 
   const avisoDocumento = documentoIncompleto(termo);
   const buscandoDocumento = pareceDocumentoCompleto(termo) && idsPorDocumento === undefined;
@@ -43,30 +82,36 @@ export default function Credenciamento() {
       <div className="space-y-4">
         <ContadorAoVivo contadores={contadores} />
 
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            value={termo}
-            onChange={(e) => setTermo(e.target.value)}
-            placeholder="Nome, fatura ou CPF completo"
-            className="h-12 pl-9 pr-10"
-            autoComplete="off"
-            aria-label="Buscar participante"
-          />
-          {termo !== "" && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
-              onClick={() => setTermo("")}
-              aria-label="Limpar busca"
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </Button>
-          )}
+        <ChipsLote lotes={lotes} selecionado={lote} onSelecionar={setLote} />
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              value={termo}
+              onChange={(e) => setTermo(e.target.value)}
+              placeholder="Buscar por nome, fatura ou CPF completo…"
+              className="h-12 pl-9 pr-10"
+              autoComplete="off"
+              aria-label="Buscar participante"
+            />
+            {termo !== "" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                onClick={() => setTermo("")}
+                aria-label="Limpar busca"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            )}
+          </div>
+
+          <AbasSituacao valor={situacao} onMudar={setSituacao} />
         </div>
 
         {/* O CPF está criptografado: busca parcial não existe, e é melhor
@@ -79,29 +124,26 @@ export default function Credenciamento() {
 
         {isLoading ? (
           <div className="space-y-2">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="h-[72px] w-full rounded-xl" />
+            {Array.from({ length: 8 }, (_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-lg" />
             ))}
           </div>
         ) : resultados.length === 0 ? (
           <p className="py-12 text-center text-muted-foreground">
             {buscandoDocumento
               ? "Procurando…"
-              : termo === ""
+              : lista.length === 0
                 ? "Nenhum participante importado ainda."
-                : "Ninguém encontrado."}
+                : "Ninguém encontrado com esses filtros."}
           </p>
         ) : (
           <>
-            <div className="space-y-2">
-              {resultados.slice(0, visiveis).map((p) => (
-                <CardParticipante
-                  key={p.id}
-                  participante={p}
-                  onAbrir={() => setSelecionado(p)}
-                />
-              ))}
-            </div>
+            <TabelaParticipantes
+              lista={resultados.slice(0, visiveis)}
+              ocupadoId={ocupadoId}
+              onAbrir={setSelecionado}
+              onAlternar={alternar}
+            />
 
             {resultados.length > visiveis && (
               <Button

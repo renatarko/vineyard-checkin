@@ -86,6 +86,44 @@ export function filtrarParticipantes(
     .sort(compararParaFila);
 }
 
+/** Abas de situação da lista, como na barra acima da tabela. */
+export type Situacao = "todos" | "realizados" | "pendentes";
+
+/**
+ * Lotes presentes na lista, para montar os chips de filtro.
+ *
+ * Sai dos próprios dados, e não de uma lista fixa: os lotes mudam de evento
+ * para evento e são só um texto livre na planilha.
+ */
+export function lotesDisponiveis(lista: Participante[]): string[] {
+  const vistos = new Map<string, string>();
+  for (const p of lista) {
+    const lote = p.lote?.trim();
+    if (lote === undefined || lote === "") continue;
+    // Mantém a grafia original, mas não repete "1º Lote" e "1º lote".
+    if (!vistos.has(normalizarTexto(lote))) vistos.set(normalizarTexto(lote), lote);
+  }
+  return [...vistos.values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+export function filtrarPorLote(
+  lista: ParticipanteBuscavel[],
+  lote: string | null,
+): ParticipanteBuscavel[] {
+  if (lote === null) return lista;
+  const alvo = normalizarTexto(lote);
+  return lista.filter((p) => normalizarTexto(p.lote) === alvo);
+}
+
+export function filtrarPorSituacao(
+  lista: ParticipanteBuscavel[],
+  situacao: Situacao,
+): ParticipanteBuscavel[] {
+  if (situacao === "todos") return lista;
+  const credenciado = situacao === "realizados";
+  return lista.filter((p) => (p.checkin_em !== null) === credenciado);
+}
+
 export interface Contadores {
   total: number;
   credenciados: number;

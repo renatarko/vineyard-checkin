@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { contar, filtrarParticipantes, indexar } from "@/lib/busca";
+import {
+  contar,
+  filtrarParticipantes,
+  filtrarPorLote,
+  filtrarPorSituacao,
+  indexar,
+  lotesDisponiveis,
+} from "@/lib/busca";
 import { nomeExibicao } from "@/lib/nomes";
 import type { Participante } from "@/lib/types";
 
@@ -167,5 +174,43 @@ describe("contar", () => {
 
   it("lista vazia não quebra", () => {
     expect(contar([])).toEqual({ total: 0, credenciados: 0, pendentesIdentificacao: 0 });
+  });
+});
+
+describe("lotesDisponiveis", () => {
+  it("lista os lotes presentes, em ordem", () => {
+    expect(lotesDisponiveis(LISTA)).toEqual(["2º lote"]);
+  });
+
+  it("não repete o mesmo lote escrito de formas diferentes", () => {
+    const lista = indexar([
+      p({ nome_origem: "A", lote: "1º Lote" }),
+      p({ nome_origem: "B", lote: "1º lote" }),
+      p({ nome_origem: "C", lote: "2º lote" }),
+    ]);
+    expect(lotesDisponiveis(lista)).toEqual(["1º Lote", "2º lote"]);
+  });
+
+  it("ignora quem está sem lote", () => {
+    const lista = indexar([p({ nome_origem: "A", lote: null }), p({ nome_origem: "B", lote: "" })]);
+    expect(lotesDisponiveis(lista)).toEqual([]);
+  });
+});
+
+describe("filtrarPorLote", () => {
+  it("null devolve tudo", () => {
+    expect(filtrarPorLote(LISTA, null)).toHaveLength(4);
+  });
+
+  it("filtra ignorando caixa e acento", () => {
+    expect(filtrarPorLote(LISTA, "2º LOTE")).toHaveLength(1);
+  });
+});
+
+describe("filtrarPorSituacao", () => {
+  it("separa credenciados de pendentes", () => {
+    expect(filtrarPorSituacao(LISTA, "todos")).toHaveLength(4);
+    expect(filtrarPorSituacao(LISTA, "realizados")).toHaveLength(1);
+    expect(filtrarPorSituacao(LISTA, "pendentes")).toHaveLength(3);
   });
 });
