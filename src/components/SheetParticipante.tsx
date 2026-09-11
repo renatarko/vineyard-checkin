@@ -85,7 +85,10 @@ export function SheetParticipante({
 
   return (
     <Sheet open={aberto} onOpenChange={(v) => !v && onFechar()}>
-      <SheetContent side="bottom" className="max-h-[92dvh] overflow-y-auto rounded-t-2xl">
+      <SheetContent
+        side="bottom"
+        className="max-h-[calc(92dvh_-_var(--teclado,0px))] overflow-y-auto rounded-t-2xl"
+      >
         <SheetHeader className="text-left">
           <SheetTitle className="pr-8 text-xl">{participante.nome_exibicao}</SheetTitle>
           <SheetDescription asChild>
@@ -131,6 +134,13 @@ export function SheetParticipante({
               placeholder={participante.nome_origem}
               autoComplete="off"
               autoCapitalize="words"
+              onFocus={(e) => {
+                // O painel já subiu acima do teclado, mas a rolagem interna
+                // pode ter ficado no topo. O atraso espera a animação do
+                // teclado terminar — antes dela a medida ainda é a antiga.
+                const campo = e.currentTarget;
+                setTimeout(() => campo.scrollIntoView({ block: "center", behavior: "smooth" }), 350);
+              }}
             />
             {erro !== null && <p className="text-sm text-destructive">{erro}</p>}
 
