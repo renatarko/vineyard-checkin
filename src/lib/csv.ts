@@ -70,7 +70,7 @@ export function decodificar(buffer: ArrayBuffer): string {
 
 /** Normaliza o cabeçalho: tira BOM, acento, caixa e pontuação de borda. */
 export function normalizarCabecalho(bruto: string): string {
-  return normalizarTexto(bruto.replace(/^﻿/, "").replace(/["']/g, "")).replace(
+  return normalizarTexto(bruto.replace(/^\uFEFF/, "").replace(/["']/g, "")).replace(
     /[.:]+$/,
     "",
   );
@@ -120,7 +120,7 @@ export function parseCsv(texto: string): ResultadoParse {
     header: true,
     delimiter: "",
     skipEmptyLines: "greedy",
-    transformHeader: (h) => h.replace(/^﻿/, "").trim(),
+    transformHeader: (h) => h.replace(/^\uFEFF/, "").trim(),
   });
 
   const cabecalhos = saida.meta.fields ?? [];

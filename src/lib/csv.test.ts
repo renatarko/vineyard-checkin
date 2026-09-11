@@ -32,7 +32,7 @@ describe("decodificar", () => {
 
 describe("normalizarCabecalho", () => {
   it("remove BOM, acento, aspas e caixa", () => {
-    expect(normalizarCabecalho("﻿Nome Participante")).toBe("nome participante");
+    expect(normalizarCabecalho("\uFEFFNome Participante")).toBe("nome participante");
     expect(normalizarCabecalho('"CPF/CNPJ"')).toBe("cpf/cnpj");
     expect(normalizarCabecalho("E-mail:")).toBe("e-mail");
   });
@@ -58,7 +58,7 @@ describe("parseCsv", () => {
   });
 
   it("aceita BOM no primeiro cabeçalho", () => {
-    const r = parseCsv(`﻿${CABECALHO}\nAna;1;a@b.c;Ana;INV-3;L1`);
+    const r = parseCsv(`\uFEFF${CABECALHO}\nAna;1;a@b.c;Ana;INV-3;L1`);
     expect(r.linhas[0].nome).toBe("Ana");
   });
 
