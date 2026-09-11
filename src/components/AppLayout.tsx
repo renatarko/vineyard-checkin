@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FaixaMock } from "@/components/FaixaMock";
+import { BotaoTema } from "@/components/BotaoTema";
 
 const ABAS = [
   { para: "/", rotulo: "Credenciar", Icone: ScanLine, soAdmin: false },
@@ -28,6 +29,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <span className="hidden truncate text-sm text-muted-foreground sm:inline">
               {perfil?.nome}
             </span>
+            <BotaoTema />
             <Button variant="ghost" size="icon" onClick={sair} aria-label="Sair">
               <LogOut className="h-4 w-4" aria-hidden />
             </Button>

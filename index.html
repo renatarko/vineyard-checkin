@@ -4,6 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#081629" />
+    <script>
+      // Roda antes de qualquer pintura, senão a tela aparece clara e escurece
+      // em seguida. Precisa ser inline: um módulo importado chegaria tarde.
+      // "dark" aparece aqui como literal para o Tailwind não descartar o
+      // bloco `.dark` ao escanear o conteúdo.
+      (function () {
+        var tema = "escuro";
+        try {
+          var salvo = localStorage.getItem("vineyard:tema");
+          if (salvo === "claro" || salvo === "escuro") tema = salvo;
+        } catch (e) {
+          /* storage bloqueado: segue no padrão */
+        }
+        var raiz = document.documentElement;
+        raiz.classList.toggle("dark", tema === "escuro");
+        raiz.style.colorScheme = tema === "escuro" ? "dark" : "light";
+      })();
+    </script>
     <title>Credenciamento Vineyard</title>
   </head>
   <body>
