@@ -48,7 +48,7 @@ const ALIASES: Record<CampoConhecido, string[]> = {
     "nome do titular",
   ],
   fatura: ["fatura", "invoice", "numero da fatura", "n da fatura", "pedido"],
-  lote: ["lote", "tipo de ingresso", "ingresso", "categoria"],
+  lote: ["nome do lote", "nome lote", "lote", "tipo de ingresso", "ingresso", "categoria"],
 };
 
 export class ErroCsv extends Error {}

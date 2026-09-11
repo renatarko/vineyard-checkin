@@ -12,7 +12,7 @@ const CAMPOS: Record<string, string> = {
   email: "E-mail",
   comprador: "Nome do comprador",
   fatura: "Fatura",
-  lote: "Lote",
+  lote: "Nome do lote",
 };
 
 export default function Importar() {

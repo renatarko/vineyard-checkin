@@ -5,7 +5,7 @@
 ## Contexto
 
 Precisamos credenciar participantes de um evento a partir de um CSV com as colunas
-`nome participante; cpf/cnpj; email; nome comprador; fatura; lote`.
+`nome participante; cpf/cnpj; email; nome comprador; fatura; nome do lote`.
 
 O problema central é que, nas **inscrições coletivas**, todas as linhas vêm com o nome do
 participante igual ao do comprador — e provavelmente com o CPF do comprador também. Isso
@@ -370,7 +370,7 @@ Roteiro manual, na ordem:
 
 - `nomes` — `nomeExibicao` nos três casos da tabela; nome vazio → nulo; limite de 120 chars.
 - `documento` — CPF formatado, CNPJ, vazio, ausente.
-- `csv` — BOM; header com acento/maiúscula; aliases (`cpf/cnpj`, `cpf`, `documento`); `;` e
+- `csv` — BOM; header com acento/maiúscula; aliases (`cpf/cnpj`, `cpf`, `documento`; `nome do lote`, `lote`); `;` e
   `,`; aspas com `;` dentro; linha vazia; coluna `nome` ausente → erro nomeado; utf-8 vs
   windows-1252; CRLF.
 - `importacao` — **o mais importante, cada teste é uma regra de negócio**: assinatura estável

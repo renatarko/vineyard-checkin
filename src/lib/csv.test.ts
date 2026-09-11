@@ -7,7 +7,8 @@ import {
   parseCsv,
 } from "@/lib/csv";
 
-const CABECALHO = "nome participante;cpf/cnpj;email;nome comprador;fatura;lote";
+const CABECALHO =
+  "nome participante;cpf/cnpj;email;nome comprador;fatura;nome do lote";
 
 describe("decodificar", () => {
   it("lê UTF-8", () => {
@@ -97,6 +98,25 @@ describe("parseCsv", () => {
   it("prefere 'nome participante' quando também existe 'nome'", () => {
     const r = parseCsv("nome;nome participante\nComprador X;Participante Y");
     expect(r.linhas[0].nome).toBe("Participante Y");
+  });
+
+  it("lê a coluna de lote como 'nome do lote'", () => {
+    const r = parseCsv("nome participante;nome do lote\nAna;2º lote");
+    expect(r.linhas[0].lote).toBe("2º lote");
+    expect(r.mapeamento.lote).toBe("nome do lote");
+  });
+
+  it("ainda aceita o cabeçalho antigo 'lote'", () => {
+    // Planilhas de exportações anteriores não precisam ser editadas à mão.
+    const r = parseCsv("nome participante;lote\nAna;1º lote");
+    expect(r.linhas[0].lote).toBe("1º lote");
+  });
+
+  it("com as duas colunas, 'nome do lote' ganha", () => {
+    const r = parseCsv("nome participante;lote;nome do lote\nAna;antigo;novo");
+    expect(r.linhas[0].lote).toBe("novo");
+    // A coluna perdedora não some sem aviso: aparece como ignorada.
+    expect(r.colunasIgnoradas).toContain("lote");
   });
 
   it("aguenta CRLF", () => {
