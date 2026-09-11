@@ -87,31 +87,28 @@ Deno.serve(async (req) => {
 
       if (erroCriar) {
         // E-mail real pode já existir no Auth: convite reemitido para a mesma
-        // pessoa, ou usuário criado à mão no painel. Reaproveitar é o certo —
+        // pessoa, ou alguém já cadastrado na equipe. Reaproveitar é o certo —
         // criar outro deixaria duas contas para o mesmo endereço.
-        const { data: lista } = await admin.auth.admin.listUsers();
-        const existente = lista?.users?.find(
-          (u) => u.email?.toLowerCase() === email.toLowerCase(),
-        );
-        if (!existente) {
+        //
+        // Lookup pela RPC, e não por `listUsers()`, que devolve 50 por página:
+        // numa base maior a pessoa não apareceria e cairíamos em FALHA_INTERNA.
+        const { data: achado } = await admin.rpc("usuario_por_email", { p_email: email });
+        if (!achado) {
           console.error("falha ao criar usuário:", erroCriar.message);
           return erro("FALHA_INTERNA", 500);
         }
-        userId = existente.id;
+        userId = achado as string;
 
         // Usuário criado à mão no painel costuma vir sem e-mail confirmado, e
         // generateLink tropeça nisso. Confirmar aqui é legítimo: o acesso foi
-        // provado pelo token do convite, não pela caixa de entrada — que, de
-        // resto, nunca recebe nada neste sistema.
-        if (!existente.email_confirmed_at) {
-          const { error: erroConfirmar } = await admin.auth.admin.updateUserById(
-            existente.id,
-            { email_confirm: true },
-          );
-          if (erroConfirmar) {
-            console.error("falha ao confirmar e-mail:", erroConfirmar.message);
-            return erro("FALHA_INTERNA", 500);
-          }
+        // provado pelo token do convite, não pela caixa de entrada.
+        const { error: erroConfirmar } = await admin.auth.admin.updateUserById(
+          userId,
+          { email_confirm: true },
+        );
+        if (erroConfirmar) {
+          console.error("falha ao confirmar e-mail:", erroConfirmar.message);
+          return erro("FALHA_INTERNA", 500);
         }
       } else if (criado?.user) {
         userId = criado.user.id;

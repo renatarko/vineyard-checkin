@@ -1,27 +1,54 @@
-// Envia um código de acesso para quem já é admin.
+// Envia o código de acesso para quem está cadastrado na equipe.
 //
-// Existe para uma única situação: o admin fez logout e o convite dele já foi
-// consumido. Sem isto, a saída seria voltar ao SQL Editor e inserir outro
-// convite à mão.
+// A regra que dá sentido a esta função: **só recebe código quem tem perfil
+// ATIVO em `public.perfis`**. Quem não foi cadastrado pelo admin não recebe
+// nada, e não fica sabendo por quê.
 //
-// Só dispara para e-mail que corresponde a um perfil admin ATIVO. A checagem
-// acontece aqui, com service role, porque o cliente não tem como saber quem é
-// admin — e não deveria ter.
+// Por que o código sai pelo Resend e não pelo Supabase: sem SMTP próprio, o
+// mailer nativo manda 2 e-mails por hora e só entrega para membros da
+// organização do projeto — a equipe de portaria não receberia nada. E há um
+// efeito colateral que interessa: com o mailer nativo inerte, o endpoint
+// público `POST /auth/v1/otp` (que qualquer um pode chamar, porque a chave
+// anônima é pública) não consegue enviar. O único caminho que entrega é este,
+// e ele confere `perfis` antes.
 //
-// A resposta é sempre a mesma, exista o e-mail ou não: uma resposta que
-// diferenciasse os casos viraria um jeito de descobrir quem tem acesso.
+// `generateLink` GERA o código e não envia — quem envia somos nós.
 //
-// NUNCA logar o e-mail nem o código.
+// A resposta é sempre a mesma, aconteça o que acontecer: qualquer diferença
+// viraria um jeito de descobrir quem tem acesso ao sistema.
+//
+// NUNCA logar e-mail nem código.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.1";
 import { cors, erro, json } from "../_shared/cors.ts";
+import { APP_NOME, enviarEmail, layoutEmail } from "../_shared/email.ts";
 
 const URL_SUPABASE = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-/** Resposta única, para não revelar quem tem acesso. */
+/** Precisa bater com `[auth.email] otp_expiry` no config.toml. */
+const MINUTOS_VALIDADE = 10;
+
 const RESPOSTA_PADRAO = { ok: true };
+
+function corpoDoEmail(codigo: string, nome: string): string {
+  return layoutEmail({
+    preTitulo: "Seu código de acesso",
+    titulo: `Olá, ${nome}`,
+    corpo: `
+      <p style="margin:0 0 20px;color:#52525b;font-size:15px;line-height:1.6;">
+        Use o código abaixo para entrar no credenciamento. Ele vale por
+        <strong>${MINUTOS_VALIDADE} minutos</strong>.
+      </p>
+      <div style="background:#f4f4f5;border-radius:12px;padding:24px;text-align:center;margin-bottom:20px;">
+        <span style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:0.25em;color:#081629;">${codigo}</span>
+      </div>
+      <p style="margin:0;color:#a1a1aa;font-size:13px;line-height:1.6;">
+        Se não foi você que pediu, pode ignorar este e-mail — sem o código,
+        ninguém entra.
+      </p>`,
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -41,44 +68,42 @@ Deno.serve(async (req) => {
   });
 
   try {
-    // auth.users é quem guarda o e-mail; perfis é quem guarda o papel.
-    const { data: lista, error: erroLista } = await admin.auth.admin.listUsers();
-    if (erroLista) {
-      console.error("falha ao listar usuários:", erroLista.message);
-      return json(RESPOSTA_PADRAO);
-    }
-
-    const usuario = lista?.users?.find((u) => u.email?.toLowerCase() === email);
-    if (!usuario) return json(RESPOSTA_PADRAO);
-
-    const { data: perfil } = await admin
+    // A lista de quem pode entrar é esta tabela. Um SELECT direto pelo e-mail
+    // — antes isto varria `listUsers()`, que pagina de 50 em 50.
+    const { data: perfil, error: erroPerfil } = await admin
       .from("perfis")
-      .select("papel, ativo")
-      .eq("user_id", usuario.id)
+      .select("user_id, nome, ativo")
+      .eq("email", email)
       .maybeSingle();
 
-    // Operador não usa esta porta: ele pede um link novo a quem administra.
-    // Revogado também não — `ativo` é o que corta o acesso em todo o sistema.
-    if (perfil?.papel !== "admin" || perfil?.ativo !== true) {
+    if (erroPerfil) {
+      console.error("falha ao consultar perfil:", erroPerfil.message);
       return json(RESPOSTA_PADRAO);
     }
 
-    // Quem envia é o próprio Auth. `shouldCreateUser: false` garante que esta
-    // rota nunca crie conta — ela só reabre o acesso de quem já tem.
-    const anonimo = createClient(URL_SUPABASE, ANON, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    const { error: erroEnvio } = await anonimo.auth.signInWithOtp({
+    // Não cadastrado ou desativado: nada é enviado, e a resposta não muda.
+    if (!perfil || perfil.ativo !== true) return json(RESPOSTA_PADRAO);
+
+    const { data: link, error: erroLink } = await admin.auth.admin.generateLink({
+      type: "magiclink",
       email,
-      options: { shouldCreateUser: false },
     });
 
-    if (erroEnvio) {
-      console.error("falha ao enviar código:", erroEnvio.message);
-      // Ainda assim a resposta é a mesma: o cliente não precisa saber, e o
-      // motivo mais provável é limite de envio, não e-mail inexistente.
+    const codigo = link?.properties?.email_otp;
+    if (erroLink || !codigo) {
+      console.error("falha ao gerar código:", erroLink?.message);
       return json(RESPOSTA_PADRAO);
     }
+
+    const enviado = await enviarEmail({
+      para: email,
+      assunto: `Seu código de acesso — ${APP_NOME}`,
+      html: corpoDoEmail(codigo, perfil.nome),
+    });
+
+    // Mesmo com falha de envio a resposta é igual: o motivo mais provável é
+    // problema do provedor, e o cliente não ganha nada sabendo disso.
+    if (!enviado) console.error("e-mail de código não saiu");
 
     return json(RESPOSTA_PADRAO);
   } catch (e) {
