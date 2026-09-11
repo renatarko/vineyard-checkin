@@ -10,8 +10,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "types": "supabase gen types typescript --local > src/integrations/supabase/types.ts",
-    "dev:mock": "VITE_MOCK=true vite"
+    "types": "supabase gen types typescript --linked > src/integrations/supabase/types.ts",
+    "dev:mock": "VITE_MOCK=true vite",
+    "types:local": "supabase gen types typescript --local > src/integrations/supabase/types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -53,7 +54,7 @@
     "globals": "^15.15.0",
     "jsdom": "^25.0.1",
     "postcss": "^8.5.6",
-    "supabase": "^2.117.0",
+    "supabase": "^2.67.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
