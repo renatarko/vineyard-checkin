@@ -25,6 +25,8 @@ export interface Participante {
 export interface Perfil {
   user_id: string;
   nome: string;
+  /** É por ele que a pessoa entra em /login. Nulo em perfis antigos, de convite sem e-mail. */
+  email: string | null;
   papel: Papel;
   ativo: boolean;
 }

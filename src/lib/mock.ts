@@ -211,9 +211,36 @@ function convitesAgora(): Convite[] {
 const PERFIL: Perfil = {
   user_id: "mock-admin",
   nome: "Renata (demonstração)",
+  email: "renata@exemplo.com",
   papel: "admin",
   ativo: true,
 };
+
+/** Equipe de mentira: um admin, dois operadores, um deles já sem acesso. */
+let equipeIniciais: Perfil[] | null = null;
+
+function equipe(): Perfil[] {
+  if (equipeIniciais === null) {
+    equipeIniciais = [
+      PERFIL,
+      {
+        user_id: "mock-bia",
+        nome: "Bia Portaria",
+        email: "bia@exemplo.com",
+        papel: "operador",
+        ativo: true,
+      },
+      {
+        user_id: "mock-ex",
+        nome: "Estagiário (saiu)",
+        email: "estagiario@exemplo.com",
+        papel: "operador",
+        ativo: false,
+      },
+    ];
+  }
+  return equipeIniciais;
+}
 
 /** Latência de mentira, para dar tempo de ver os estados de carregamento. */
 const espera = (ms = 180) => new Promise((r) => setTimeout(r, ms));
@@ -287,6 +314,66 @@ export const mock = {
     p.nome_real_por = p.nome_real ? PERFIL.user_id : null;
     recalcularExibicao(p);
     return semSegredo(p);
+  },
+
+  async listarEquipe(): Promise<Perfil[]> {
+    await espera();
+    return [...equipe()].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  },
+
+  async cadastrarMembro({
+    nome,
+    email,
+    papel,
+  }: {
+    nome: string;
+    email: string;
+    papel: Papel;
+  }): Promise<{ perfil: Perfil; avisado: boolean }> {
+    await espera(300);
+    const alvo = email.trim().toLowerCase();
+    const atual = equipe();
+    const existente = atual.find((p) => p.email === alvo);
+
+    if (existente) {
+      // Recadastrar quem já existe atualiza e reativa, como a RPC faz.
+      existente.nome = nome.trim();
+      existente.papel = papel;
+      existente.ativo = true;
+      return { perfil: existente, avisado: true };
+    }
+
+    const novo: Perfil = {
+      user_id: `mock-${alvo}`,
+      nome: nome.trim(),
+      email: alvo,
+      papel,
+      ativo: true,
+    };
+    atual.push(novo);
+    return { perfil: novo, avisado: true };
+  },
+
+  async definirPapel(userId: string, papel: Papel): Promise<Perfil> {
+    await espera(150);
+    if (userId === PERFIL.user_id && papel !== "admin") {
+      throw new Error("NAO_PODE_REBAIXAR_A_SI_MESMO");
+    }
+    const p = equipe().find((x) => x.user_id === userId);
+    if (!p) throw new Error("PERFIL_INEXISTENTE");
+    p.papel = papel;
+    return p;
+  },
+
+  async definirAtivo(userId: string, ativo: boolean): Promise<Perfil> {
+    await espera(150);
+    if (userId === PERFIL.user_id && !ativo) {
+      throw new Error("NAO_PODE_DESATIVAR_A_SI_MESMO");
+    }
+    const p = equipe().find((x) => x.user_id === userId);
+    if (!p) throw new Error("PERFIL_INEXISTENTE");
+    p.ativo = ativo;
+    return p;
   },
 
   async listarConvites(): Promise<Convite[]> {
@@ -430,5 +517,6 @@ export const mock = {
     sequencia = 0;
     participantes = null;
     convitesIniciais = null;
+    equipeIniciais = null;
   },
 };

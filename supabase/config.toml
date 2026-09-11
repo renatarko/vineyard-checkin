@@ -219,12 +219,16 @@ double_confirm_changes = true
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
-# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+# Intervalo mínimo entre dois e-mails para a MESMA pessoa. O padrão "1s" foi
+# escrito quando nada saía de verdade; com o Resend ligado, ele permitiria um
+# código por segundo — cota queimada e reputação do domínio junto.
+max_frequency = "60s"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# 10 minutos: tempo de sobra para abrir o e-mail e digitar, e curto o bastante
+# para um código vazado não servir depois. O texto do e-mail cita este prazo.
+otp_expiry = 600
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -406,6 +410,12 @@ verify_jwt = false
 # Revogar exige sessão de admin: a função confere o papel antes de agir.
 # Chamada antes de existir sessão — quem faz a triagem é a própria função,
 # que só envia código para admin ativo.
+# Cadastro da equipe: exige JWT, e a própria função confere se quem chamou é
+# admin usando esse token.
+[functions.cadastrar-membro]
+enabled = true
+verify_jwt = true
+
 [functions.enviar-codigo]
 enabled = true
 verify_jwt = false

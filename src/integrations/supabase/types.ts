@@ -290,6 +290,7 @@ export type Database = {
         Row: {
           ativo: boolean
           criado_em: string
+          email: string | null
           nome: string
           papel: string
           user_id: string
@@ -297,6 +298,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           criado_em?: string
+          email?: string | null
           nome: string
           papel: string
           user_id: string
@@ -304,6 +306,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           criado_em?: string
+          email?: string | null
           nome?: string
           papel?: string
           user_id?: string
@@ -398,6 +401,40 @@ export type Database = {
         Args: { p_participante_id: string }
         Returns: string
       }
+      definir_ativo: {
+        Args: { p_ativo: boolean; p_user_id: string }
+        Returns: {
+          ativo: boolean
+          criado_em: string
+          email: string | null
+          nome: string
+          papel: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "perfis"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      definir_papel: {
+        Args: { p_papel: string; p_user_id: string }
+        Returns: {
+          ativo: boolean
+          criado_em: string
+          email: string | null
+          nome: string
+          papel: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "perfis"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       desfazer_credenciamento: {
         Args: { p_id: string }
         Returns: {
@@ -441,9 +478,32 @@ export type Database = {
       is_equipe: { Args: never; Returns: boolean }
       limpar_nome: { Args: { p: string }; Returns: string }
       norm_texto: { Args: { p: string }; Returns: string }
+      registrar_membro: {
+        Args: {
+          p_email: string
+          p_nome: string
+          p_papel: string
+          p_user_id: string
+        }
+        Returns: {
+          ativo: boolean
+          criado_em: string
+          email: string | null
+          nome: string
+          papel: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "perfis"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       revogar_convite: { Args: { p_convite_id: string }; Returns: undefined }
       so_digitos: { Args: { p: string }; Returns: string }
       tipo_documento: { Args: { p_documento: string }; Returns: string }
+      usuario_por_email: { Args: { p_email: string }; Returns: string }
       validar_convite: {
         Args: { p_token: string }
         Returns: {

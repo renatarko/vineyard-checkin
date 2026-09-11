@@ -10,13 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const TAMANHO_CODIGO = 6;
 
 /**
- * Reentrada por código, para quem administra.
+ * Entrada da equipe.
  *
- * O caminho normal de acesso é o link de convite. Esta tela existe para uma
- * única situação: o admin saiu e o convite dele já foi consumido — sem ela, a
- * saída seria inserir outro convite à mão no SQL Editor.
+ * É o caminho normal de acesso: quem foi cadastrado informa o e-mail e recebe
+ * um código. A checagem de quem pode receber mora na Edge Function
+ * `enviar-codigo`, que consulta `perfis` — quem não está lá, ativo, não recebe
+ * nada, e a tela não deixa isso transparecer.
  *
- * Operador não usa esta porta: pede um link novo a quem administra.
+ * O link de convite continua existindo como reserva, para quem não tem e-mail
+ * e para o caso de o envio falhar no dia do evento.
  */
 export default function Login() {
   const navegar = useNavigate();
@@ -85,8 +87,8 @@ export default function Login() {
           <CardTitle className="text-xl">Entrar</CardTitle>
           <CardDescription>
             {etapa === "email"
-              ? "Para quem administra o credenciamento. Enviamos um código para o seu e-mail."
-              : `Digite o código de ${TAMANHO_CODIGO} dígitos que chegou em ${email}.`}
+              ? "Informe o e-mail cadastrado pela organização do evento. Enviamos um código de acesso."
+              : `Digite o código de ${TAMANHO_CODIGO} dígitos que chegou em ${email}. Ele vale por 10 minutos.`}
           </CardDescription>
         </CardHeader>
 
@@ -159,7 +161,8 @@ export default function Login() {
           {erro !== null && <p className="text-center text-sm text-destructive">{erro}</p>}
 
           <p className="text-center text-xs text-muted-foreground">
-            É da equipe de portaria? Peça um link de convite a quem organiza o evento.
+            Não recebeu? Confira o spam, ou peça a quem organiza o evento para conferir se
+            o seu e-mail está cadastrado.
           </p>
         </CardContent>
       </Card>

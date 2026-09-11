@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Copy, Link2, Loader2, ShieldOff } from "lucide-react";
+import { Check, ChevronDown, Copy, Link2, Loader2, ShieldOff, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -26,15 +26,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useConvites } from "@/hooks/useConvites";
+import { useEquipe } from "@/hooks/useEquipe";
+import { ListaEquipe } from "@/components/ListaEquipe";
 import { descreverEstado, estadoDoConvite } from "@/lib/convites";
 import type { Papel } from "@/lib/types";
 
 const VALIDADE_HORAS = 48;
 
 export default function Equipe() {
+  const equipe = useEquipe();
   const { lista, criar, revogar } = useConvites();
+  const [novoNome, setNovoNome] = useState("");
+  const [novoEmail, setNovoEmail] = useState("");
+  const [novoPapel, setNovoPapel] = useState<Papel>("operador");
   const [rotulo, setRotulo] = useState("");
-  const [email, setEmail] = useState("");
   const [papel, setPapel] = useState<Papel>("operador");
   const [linkNovo, setLinkNovo] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -49,6 +54,29 @@ export default function Equipe() {
     }
   };
 
+  const cadastrar = () => {
+    const nome = novoNome.trim();
+    const email = novoEmail.trim().toLowerCase();
+    if (nome === "") {
+      toast.error("Informe o nome de quem vai entrar.");
+      return;
+    }
+    if (!email.includes("@")) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+    equipe.cadastrar.mutate(
+      { nome, email, papel: novoPapel },
+      {
+        onSuccess: () => {
+          setNovoNome("");
+          setNovoEmail("");
+          setNovoPapel("operador");
+        },
+      },
+    );
+  };
+
   const criarConvite = () => {
     const nome = rotulo.trim();
     if (nome === "") {
@@ -56,13 +84,12 @@ export default function Equipe() {
       return;
     }
     criar.mutate(
-      { rotulo: nome, papel, email: email.trim() || null, horasValidade: VALIDADE_HORAS },
+      { rotulo: nome, papel, horasValidade: VALIDADE_HORAS },
       {
         onSuccess: ({ link }) => {
           setLinkNovo(link);
           setCopiado(false);
           setRotulo("");
-          setEmail("");
         },
       },
     );
@@ -75,12 +102,110 @@ export default function Equipe() {
           <div>
             <h1 className="text-lg font-semibold">Equipe</h1>
             <p className="text-sm text-muted-foreground">
-              Cada pessoa recebe um link próprio, que vale uma vez e por{" "}
-              {VALIDADE_HORAS} horas. Quem abre o link entra — mande por conversa privada.
+              Cadastre quem vai trabalhar no credenciamento. Cada pessoa entra
+              informando o e-mail e digitando um código que chega na caixa dela — quem não
+              está nesta lista não recebe código.
             </p>
           </div>
 
           <div className="space-y-3 rounded-xl border bg-card p-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                value={novoNome}
+                onChange={(e) => setNovoNome(e.target.value)}
+                placeholder="Bia Portaria"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                value={novoEmail}
+                onChange={(e) => setNovoEmail(e.target.value)}
+                placeholder="bia@exemplo.com"
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground">
+                É por este endereço que ela vai entrar. Um aviso é enviado agora.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Pode fazer o quê?</Label>
+              <div className="flex gap-2">
+                {(["operador", "admin"] as const).map((p) => (
+                  <Button
+                    key={p}
+                    type="button"
+                    variant={novoPapel === p ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => setNovoPapel(p)}
+                  >
+                    {p === "operador" ? "Só credenciar" : "Tudo"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={cadastrar}
+              disabled={equipe.cadastrar.isPending}
+            >
+              {equipe.cadastrar.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <UserPlus className="mr-2 h-4 w-4" aria-hidden />
+              )}
+              Cadastrar
+            </Button>
+          </div>
+
+          {equipe.lista.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }, (_, i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <ListaEquipe
+              equipe={equipe.lista.data ?? []}
+              meuUserId={equipe.meuUserId}
+              ocupado={equipe.definirPapel.isPending || equipe.definirAtivo.isPending}
+              onDefinirPapel={(userId, papel) =>
+                equipe.definirPapel.mutate({ userId, papel })
+              }
+              onDefinirAtivo={(userId, ativo) =>
+                equipe.definirAtivo.mutate({ userId, ativo })
+              }
+            />
+          )}
+        </section>
+
+        {/* Reserva: se o e-mail falhar no dia do evento — rede, caixa de spam,
+            provedor fora do ar — o link continua funcionando, porque não toca
+            em e-mail em momento nenhum. */}
+        <details className="rounded-xl border bg-card">
+          <summary className="flex cursor-pointer items-center justify-between gap-2 p-4 text-sm font-medium">
+            <span className="flex items-center gap-2">
+              <Link2 className="h-4 w-4" aria-hidden />
+              Link de convite (reserva)
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden />
+          </summary>
+
+          <div className="space-y-3 border-t p-4">
+            <p className="text-sm text-muted-foreground">
+              Para quem não tem e-mail, ou para o caso de o código não chegar no dia. O link
+              vale uma vez e por {VALIDADE_HORAS} horas — quem abre, entra. Mande por
+              conversa privada. Nada é enviado por e-mail aqui.
+            </p>
+
             <div className="space-y-2">
               <Label htmlFor="rotulo">De quem é este link?</Label>
               <Input
@@ -90,24 +215,6 @@ export default function Equipe() {
                 placeholder="Bia — portaria"
                 autoComplete="off"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail (opcional)</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="bia@exemplo.com"
-                autoComplete="off"
-              />
-              {/* Nada é enviado para este endereço: quem entrega o link é você.
-                  Ele serve para a conta ficar identificável no painel do
-                  Supabase em vez de virar um endereço inventado. */}
-              <p className="text-xs text-muted-foreground">
-                Não enviamos nada — serve só para identificar a conta.
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -127,7 +234,12 @@ export default function Equipe() {
               </div>
             </div>
 
-            <Button className="w-full" onClick={criarConvite} disabled={criar.isPending}>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={criarConvite}
+              disabled={criar.isPending}
+            >
               {criar.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
               ) : (
@@ -135,73 +247,73 @@ export default function Equipe() {
               )}
               Gerar link
             </Button>
-          </div>
-        </section>
 
-        <section className="space-y-2">
-          <h2 className="text-sm font-medium text-muted-foreground">Links criados</h2>
+          <section className="space-y-2 pt-2">
+            <h2 className="text-sm font-medium text-muted-foreground">Links criados</h2>
 
-          {lista.isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }, (_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-xl" />
-              ))}
-            </div>
-          ) : (lista.data ?? []).length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Nenhum link criado ainda.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {(lista.data ?? []).map((c) => {
-                const estado = estadoDoConvite(c);
-                return (
-                  <li
-                    key={c.id}
-                    className="flex items-center gap-3 rounded-xl border bg-card p-3"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{c.rotulo}</p>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant={estado === "revogado" ? "outline" : "secondary"}>
-                          {descreverEstado(estado)}
-                        </Badge>
-                        <span>{c.papel === "admin" ? "Tudo" : "Só credenciar"}</span>
-                        {c.email && <span className="truncate">{c.email}</span>}
+            {lista.isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : (lista.data ?? []).length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Nenhum link criado ainda.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {(lista.data ?? []).map((c) => {
+                  const estado = estadoDoConvite(c);
+                  return (
+                    <li
+                      key={c.id}
+                      className="flex items-center gap-3 rounded-xl border bg-card p-3"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{c.rotulo}</p>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <Badge variant={estado === "revogado" ? "outline" : "secondary"}>
+                            {descreverEstado(estado)}
+                          </Badge>
+                          <span>{c.papel === "admin" ? "Tudo" : "Só credenciar"}</span>
+                          {c.email && <span className="truncate">{c.email}</span>}
+                        </div>
                       </div>
-                    </div>
 
-                    {c.revogado_em === null && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label="Revogar acesso">
-                            <ShieldOff className="h-4 w-4" aria-hidden />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Revogar o acesso de {c.rotulo}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              O link para de funcionar e, se essa pessoa já estiver com o
-                              sistema aberto, ela perde o acesso na próxima ação. Os
-                              check-ins que ela já fez continuam valendo.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => revogar.mutate(c.id)}>
-                              Revogar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+                      {c.revogado_em === null && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label="Revogar acesso">
+                              <ShieldOff className="h-4 w-4" aria-hidden />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Revogar o acesso de {c.rotulo}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                O link para de funcionar e, se essa pessoa já estiver com o
+                                sistema aberto, ela perde o acesso na próxima ação. Os
+                                check-ins que ela já fez continuam valendo.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => revogar.mutate(c.id)}>
+                                Revogar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>          </div>
+        </details>
+
       </div>
 
       {/* O link aparece UMA vez: só o hash é guardado, nem o servidor sabe o
