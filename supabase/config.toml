@@ -205,8 +205,13 @@ web3 = 30
 # secret = ""
 
 [auth.email]
-# Allow/disallow new user signups via email to your project.
-enable_signup = false
+# CUIDADO: apesar do nome, esta chave controla o PROVEDOR de e-mail inteiro,
+# não só o cadastro. Com ela em false, o Auth passa a responder
+# "Email logins are disabled" e a rota /login para de mandar o código.
+#
+# Quem bloqueia cadastro é o `enable_signup` do bloco [auth] acima, que
+# continua false — verificado: POST /auth/v1/signup responde signup_disabled.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
